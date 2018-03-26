@@ -37,7 +37,7 @@ var socket = io.connect('http://' + document.domain + ':' + location.port);
 
 function thatfunction(){
     // Reads and loads a graph
-  d3.json("/static/miserables3.json", function(error, data) {
+  d3.json("/static/miserables4.json", function(error, data) {
   if (error) throw error;
 
       var graph_data = data
@@ -47,21 +47,22 @@ function thatfunction(){
       linkdata = graph_data.links;
       links = [];
       var x;
+      // This function prevents against unbounded access
+      // Will make things slow for large number of nodes (say millions)
       function findNode(id){
         for(i in nodes){
          if (nodes[i].id == id) return nodes[i];
         }
       }
+      // read link information and build the structure
       for (x in linkdata) {
         n = {source: findNode(linkdata[x]["source"]),target:findNode(linkdata[x]["target"]),
-            weight:linkdata[x]["weight"]};
-        //console.log(n);
+            lval:linkdata[x]["lval"],current:linkdata[x]["current"],total:linkdata[x]["total"]};
         links.push(n);
       }
       getLinkdata(); // throwing out link data
+      // Getting the last node which is sorted by index
       var temp = nodes[nodes.length - 1];
-      //console.log("Printing temp")
-      //console.log(temp)
       lastNodeId = temp["id"]
       getLastNodeId() // throwing id of last node in the node array, always sorted by id.
 
@@ -124,12 +125,12 @@ function thatfunction(){
   function recomposeJsonskel(nodes, links){
       var nd=[],ln=[];
       for (i in nodes){
-          n = {id:nodes[i].id, group:nodes[i].group};
+          n = {id:nodes[i].id, nval:nodes[i].nval, current:nodes[i].current, total:nodes[i].total};
           nd.push(n);
       }
       for (j in links){
-          //console.log(links[j]);
-          li = {source:links[j].source.id, target:links[j].target.id, weight:links[j].weight};
+          li = {source:links[j].source.id, target:links[j].target.id,
+            lval:links[j].lval, current:links[j].current, total:links[j].total};
           ln.push(li);
       }
       jdata = {nodes:nd,links:ln};
@@ -148,7 +149,8 @@ function thatfunction(){
     path.enter().append('svg:path')
       .attr('class', 'link')
       .classed('selected', function(d) { return d === selected_link; })
-      .attr("stroke-width", function(d) { return Math.sqrt(d.weight); })
+      .attr("stroke-width", function(d) { return Math.sqrt(d.lval); })
+      .attr("color", function(d){ return colors(d.lval); })
       .on('mousedown', function(d) {
         if(d3.event.ctrlKey) return;
 
@@ -170,7 +172,7 @@ function thatfunction(){
 
     // update existing nodes (reflexive & selected visual states)
     circle.selectAll('circle')
-      .style('fill', function(d) { return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.group); });
+      .style('fill', function(d) { return (d === selected_node) ? d3.rgb(colors(d.nval)).brighter().toString() : colors(d.nval); });
 
 
     // add new nodes
@@ -179,12 +181,12 @@ function thatfunction(){
     g.append('svg:circle')
       .attr('class', 'node')
       .attr('r', 12)
-      .style('fill', function(d) { return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.group); })
-      .style('stroke', function(d) { return d3.rgb(colors(d.id)).darker().toString(); })
+      .style('fill', function(d) { return (d === selected_node) ? d3.rgb(colors(d.nval)).brighter().toString() : colors(d.nval); })
+      .style('stroke', function(d) { return d3.rgb(colors(d.nval)).darker().toString(); })
       .on('mouseover', function(d) {
         if(!mousedown_node || d === mousedown_node) return;
         // enlarge target node
-        d3.select(this).attr('transform', 'scale(1.2)');
+        d3.select(this).attr('transform', 'scale(1.3)');
       })
       .on('mouseout', function(d) {
         if(!mousedown_node || d === mousedown_node) return;
@@ -202,7 +204,6 @@ function thatfunction(){
 
         // reposition drag line
         drag_line
-          //.style('marker-end', 'url(#end-arrow)')
           .classed('hidden', false)
           .attr('d', 'M' + mousedown_node.x + ',' + mousedown_node.y + 'L' + mousedown_node.x + ',' + mousedown_node.y);
 
@@ -214,7 +215,6 @@ function thatfunction(){
         // needed by FF
         drag_line
           .classed('hidden', true);
-          //.style('marker-end', '');
 
         // check for drag-to-self
         mouseup_node = d;
@@ -240,8 +240,8 @@ function thatfunction(){
         link = links.filter(function(l) {
           return (l.source === source && l.target === target);
         })[0];
-        // Adding a new link with default weight 1.
-        link = {source: source, target: target, weight:1};
+
+        link = {source: source, target: target, lval:1, current:0,total:1};
         //link[direction] = true;
         links.push(link);
 
@@ -280,7 +280,6 @@ function thatfunction(){
     if(d3.event.ctrlKey || mousedown_node || mousedown_link) return;
 
     // insert new node at point
-    // default group is 1.
     function assignNodeId(lastNodeId, nodes){
       var nd=[];
       for (i in nodes){
@@ -296,7 +295,7 @@ function thatfunction(){
       return new_id;
     }
     var point = d3.mouse(this),
-        node = {id: assignNodeId(lastNodeId,nodes), group:1};
+        node = {id: assignNodeId(lastNodeId,nodes), nval:1, current:0, total:1};
     node.x = point[0];
     node.y = point[1];
     nodes.push(node);
@@ -368,9 +367,29 @@ function thatfunction(){
         restart();
         break;
       case 65: //Key A - Add
-      break;
+        if(selected_node){
+          nodes[nodes.indexOf(selected_node)]['current'] = nodes[nodes.indexOf(selected_node)]['current'] + 1;
+          nodes[nodes.indexOf(selected_node)]['total'] = nodes[nodes.indexOf(selected_node)]['total'] + 1;
+          console.log(nodes.indexOf(selected_node))
+        } else if(selected_link) {
+          links[links.indexOf(selected_link)]['current'] = links[links.indexOf(selected_link)]['current'] + 1;
+          links[links.indexOf(selected_link)]['total'] = links[links.indexOf(selected_link)]['total'] + 1;
+          console.log(links.indexOf(selected_link))
+        }
+          restart();
+          break;
       case 68: //Key D - Decrease
-      break;
+        if(selected_node){
+          nodes[nodes.indexOf(selected_node)]['current'] = nodes[nodes.indexOf(selected_node)]['current'] - 1;
+          nodes[nodes.indexOf(selected_node)]['total'] = nodes[nodes.indexOf(selected_node)]['total'] - 1;
+          console.log(nodes.indexOf(selected_node))
+        } else if(selected_link) {
+          links[links.indexOf(selected_link)]['current'] = links[links.indexOf(selected_link)]['current'] - 1;
+          links[links.indexOf(selected_link)]['total'] = links[links.indexOf(selected_link)]['total'] - 1;
+          console.log(links.indexOf(selected_link))
+        }
+          restart();
+          break;
     }
   }
 

@@ -19,18 +19,20 @@ def file_update_and_state_reset_test(json_data):
         if key == 'nodes':
             nodes = json_data[key]
             for element in nodes:
-                print("ID: ", element['id']," Grp: ",element['group'])
+                print("ID: ", element['id']," Nval: ",element['nval'])
                 if (node_group_toggle % 2) ==0:
-                    node_list.append({"id": int(element['id']), "group": int(element['group']) %2 + 2})
+                    node_list.append({"id": int(element['id']), "nval": int(element['nval']) %2 + 2,
+                                      "current":0,"total":element['total']})
                 else:
-                    node_list.append({"id": int(element['id']), "group": int(element['group']) %2 + 1})
+                    node_list.append({"id": int(element['id']), "nval": int(element['nval']) %2 + 1,
+                                      "current":0,"total":element['total']})
 
                 node_group_toggle +=1
     print("Changed graph Structure:")
     graph_dict = {"nodes": node_list, "links": json_data["links"]}
     pprint(graph_dict)
     try:
-        with open('static/miserables3.json', 'w') as fp:
+        with open('static/miserables4.json', 'w') as fp:
             json.dump(graph_dict, fp, indent=4, sort_keys=True, separators=(',', ': '))
     except Exception:
         print("Some file writing error has occurred")
