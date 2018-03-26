@@ -1,32 +1,40 @@
 from flask import Flask
 from flask import render_template
 from flask_socketio import SocketIO
+from flask_socketio import emit
 
-## Importing custom python functions
-from test_functions import print_graph_details
+from test_functions import print_graph_details, file_update_and_state_reset_test
 
-## Specific to Flask initialization
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ibipul_is_awesome'
 socketio = SocketIO(app)
 
-## Landing page rendering
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-## Handling on button press event
-# Here we just recieve it and display what we got.
 @socketio.on('json')
 def handle_json(json_str):
     print("Length of json object", len(json_str))
     print_graph_details(json_str)
 
-# Executed when client connects
+@socketio.on('update')
+def handle_json(u_json_str):
+    print("Length of json object", len(u_json_str))
+    status = file_update_and_state_reset_test(u_json_str)
+    if status ==0:
+        emit('graph_update', {'update': True})
+    else:
+        print("Update not possible file writing error happened")
+        # emit('graph_update', {'update': False})
+
+#
 @socketio.on('my event')
 def handle_my_custom_event(json):
     print('On Connect recieved: ' + str(json))
 
 if __name__ == "__main__":
-	# Start running in debug mode of socketio
+    #app.run(debug=True)
     socketio.run(app, debug=True)

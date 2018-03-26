@@ -2,14 +2,22 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Interactive Graph editor</title>
+    <title>Graph editor</title>
     <link rel="stylesheet" href="{{url_for('static', filename='app_romulus.css')}}">
   </head>
 
   <body>
   <div id="option">
-    Press the button to send current graph to the back end
-    <input name="updateButton" type="button" value="Update" onclick="returnData()" />
+    Take a Snapshot:
+    <input name="snapshotButton"
+                 type="button"
+                value="Snapshot"
+                onclick="returnData()" />
+    Update To new states:
+    <input name="updateButton"
+                 type="button"
+                value="Update"
+                onclick="updateData()" />
   </div>
   </body>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
