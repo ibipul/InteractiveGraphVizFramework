@@ -11,7 +11,15 @@ Here's how the project is proceeding
 	-- Fixed json structure (close to networkx)
 	-- Nodes get colored by group id
 	-- Cleaned Json for communicating with backend
-- [Next Mile stones]:
-	- Current communication model is Start, push data back, update file, reload.
-	- Figure out smooth auto transition model/ Ask Ankur
-	- Figure out edit option for node group id, value and node weight/ Ask Ankur
+- *March 25*,
+	- Graph Snapshot feature with pretty print
+	- Graph write back finalized
+	- Reload from disk on update state call!
+- *March 26*,
+	- Add or decrease load on nodes on some event implemented
+
+- [Next Milestones]
+	- epic animantions (very stretch goal)
+	- test on high node densities
+	- node & link color features
+
