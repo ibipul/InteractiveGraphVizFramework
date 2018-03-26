@@ -11,12 +11,14 @@ Here's how the project is proceeding
 	-- Fixed json structure (close to networkx)
 	-- Nodes get colored by group id
 	-- Cleaned Json for communicating with backend
+- *March 20*, Redesign graph details based on latest design discussion with prof.
 - *March 25*,
 	- Graph Snapshot feature with pretty print
 	- Graph write back finalized
 	- Reload from disk on update state call!
 - *March 26*,
 	- Add or decrease load on nodes on some event implemented
+	- Stub module plug and play tested out.
 
 - [Next Milestones]
 	- epic animantions (very stretch goal)
