@@ -36,8 +36,9 @@ var socket = io.connect('http://' + document.domain + ':' + location.port);
     }
 
 function thatfunction(){
-    // Reads and loads a graph
-  d3.json("/static/miserables4.json", function(error, data) {
+  var noCache = new Date().getTime();
+  // Reads and loads a graph
+  d3.json("/static/miserables4.json?_=" + noCache, function(error, data) {
   if (error) throw error;
 
       var graph_data = data
@@ -74,7 +75,7 @@ function thatfunction(){
       .links(links)
       .size([width, height])
       .linkDistance(30)
-      .charge(-300)
+      .charge(-85)
       .on('tick', tick)
 
   // line displayed when dragging new nodes
@@ -187,6 +188,7 @@ function thatfunction(){
         if(!mousedown_node || d === mousedown_node) return;
         // enlarge target node
         d3.select(this).attr('transform', 'scale(1.3)');
+
       })
       .on('mouseout', function(d) {
         if(!mousedown_node || d === mousedown_node) return;
@@ -382,11 +384,10 @@ function thatfunction(){
         if(selected_node){
           nodes[nodes.indexOf(selected_node)]['current'] = nodes[nodes.indexOf(selected_node)]['current'] - 1;
           nodes[nodes.indexOf(selected_node)]['total'] = nodes[nodes.indexOf(selected_node)]['total'] - 1;
-          console.log(nodes.indexOf(selected_node))
+
         } else if(selected_link) {
           links[links.indexOf(selected_link)]['current'] = links[links.indexOf(selected_link)]['current'] - 1;
           links[links.indexOf(selected_link)]['total'] = links[links.indexOf(selected_link)]['total'] - 1;
-          console.log(links.indexOf(selected_link))
         }
           restart();
           break;
@@ -421,12 +422,15 @@ function thatfunction(){
   socket.emit('json', jsondata);
   console.log('json datadata Sent');
   }
+
   function updateData(){
     socket.emit('update',jsondata);
     console.log('State Update Request made');
     //svg = svg.selectAll("svg").remove();
+
     socket.on('graph_update', function(){
-    location.reload();
+    window.location.reload(true);
+    console.log('reloaded');
     });
   }
 thatfunction()
