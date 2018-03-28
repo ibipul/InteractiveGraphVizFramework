@@ -19,6 +19,8 @@ Here's how the project is proceeding
 - *March 26*,
 	- Add or decrease load on nodes on some event implemented
 	- Stub module plug and play tested out.
+- *March 27*
+	- Fixed the Caching of json file issue, in absense of dev console
 
 - [Next Milestones]
 	- epic animantions (very stretch goal)
