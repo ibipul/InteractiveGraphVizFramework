@@ -1,6 +1,12 @@
 # Project romulus
 This repo will contain all the work associated with creation of interactive graph viz interface. 
 Basic UI code has been lifted from d3.js examples by Ross Kirsling, under MIT License.
+Basic extended functionality:
+- This project provides a small web view port with a dummy initial graph that has node and link weights.
+- User can add new nodes and links to the graph.
+- User can also increase or decrease link and node weights on the fly by pressing keys on keyboard.
+- Once a desired setup is reached, user can take the latest snapshot of the graph and store on the disk (for reloading later)
+- Currently the save and reload is a little shaky, and is done through a flask server.
 
 ## Project
 Here's how the project is proceeding
