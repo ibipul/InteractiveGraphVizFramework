@@ -1,4 +1,4 @@
-# Project romulus
+# Interactive Graph Visualization framework (D3.js)
 This repo will contain all the work associated with creation of interactive graph viz interface. 
 Basic UI code has been lifted from d3.js examples by Ross Kirsling, under MIT License.
 Basic extended functionality:
