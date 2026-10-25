@@ -37,12 +37,18 @@ then rescales all lengths so they sum to the number of edges. Bridges grow
 long and in-group edges shrink, so cutting the long edges ("surgery")
 splits the network into communities.
 
-Forman curvature is not bounded and grows with the endpoints' degrees, so
-for the flow it is divided by deg(x) + deg(y), then by its largest absolute
-value, putting it in [-1, 1] like Ollivier's. Without the degree division
-the flow mostly reflects degrees and finds no communities in stochastic
-block models. This normalization is a choice made here, not taken from the
-papers above; with it, use a smaller step (0.3) for a stable flow.
+Forman in the flow. Forman's edge weights mean connection strength, while
+the flow evolves lengths (distances), so the flow computes Forman with
+weight = 1 / length. Feeding it lengths instead is a feedback loop: a link
+the flow stretches looks even more negatively curved, stretches further,
+and after ~100 iterations every length collapses to one community. Forman
+curvature is also unbounded and grows with the endpoints' degrees, so for
+the flow it is divided by deg(x) + deg(y), then by its largest absolute
+value, putting it in [-1, 1] like Ollivier's, and lengths are kept within
+FORMAN_LENGTHS times the mean. These choices are made here, not taken from
+the papers above; with them, use a smaller step (0.3). Forman remains a
+much rougher signal than Ollivier: it finds no communities in noisier block
+models or LFR graphs where the Ollivier flow does.
 
 Edge lengths are distances. A capacity means the opposite (a stronger
 connection), so by default the starting length is 1 / capacity.
@@ -244,6 +250,15 @@ def flow_signal(arrays: EdgeArrays, kappa: np.ndarray, method: str) -> np.ndarra
 
 
 DEFAULT_STEP = {"ollivier": 1.0, "forman": 0.3}
+FORMAN_LENGTHS = (0.01, 100.0)   # flow lengths stay within this range times the mean
+
+
+def bound_lengths(length: np.ndarray, method: str) -> np.ndarray:
+    """Keep updated lengths positive; for Forman, also within FORMAN_LENGTHS."""
+    if method == "forman":
+        lo, hi = FORMAN_LENGTHS
+        return np.clip(length, lo, hi)
+    return np.maximum(length, MIN_LENGTH)
 
 
 def curvature(arrays: EdgeArrays, length: np.ndarray, method: str = "ollivier",
@@ -251,7 +266,7 @@ def curvature(arrays: EdgeArrays, length: np.ndarray, method: str = "ollivier",
     if method == "ollivier":
         return ollivier_ricci(arrays, length, alpha, should_stop)
     if method == "forman":
-        return forman_ricci(arrays, length)
+        return forman_ricci(arrays, 1.0 / length)  # Forman weights are strengths (see top)
     raise ValueError(f"method must be one of {', '.join(METHODS)}")
 
 
@@ -296,7 +311,7 @@ def ricci_flow(arrays: EdgeArrays, iterations: int = 20, method: str = "ollivier
     for it in range(1, iterations + 1):
         if should_stop and should_stop():
             break
-        new_length = np.maximum(length - step * kappa * length, MIN_LENGTH)
+        new_length = bound_lengths(length - step * kappa * length, method)
         new_length *= len(new_length) / new_length.sum()
         try:
             new_kappa = flow_curvature(new_length)

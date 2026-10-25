@@ -201,7 +201,7 @@ class Session:
         except InterruptedError:
             return False
         scaled = ricci.flow_signal(arrays, kappa, s["method"])
-        proposed = np.maximum(before - s["step"] * scaled * before, ricci.MIN_LENGTH)
+        proposed = ricci.bound_lengths(before - s["step"] * scaled * before, s["method"])
 
         with self.state.lock:
             by_key = {(l["source"], l["target"]): l for l in self.state.graph["links"]}

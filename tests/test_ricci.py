@@ -134,3 +134,19 @@ def test_linprog_fallback_handles_tiny_masses(monkeypatch):
         monkeypatch.setattr(ricci, "ot", None)
         assert ricci.emd2(a, b, cost) == pytest.approx(want, abs=1e-8)
         monkeypatch.setattr(ricci, "ot", ot)
+
+
+def test_forman_flow_does_not_collapse():
+    # With lengths fed as Forman weights, every length collapsed after ~100 iterations.
+    arrays, _ = karate()
+    short = ricci.ricci_flow(arrays, iterations=20, method="forman", init="uniform", tolerance=0)
+    long = ricci.ricci_flow(arrays, iterations=200, method="forman", init="uniform", tolerance=0)
+    assert ricci.find_communities(arrays, long.length).count > 1
+    assert ricci.find_communities(arrays, long.length).count == ricci.find_communities(arrays, short.length).count
+    assert long.length.min() > 1e-3  # no link shrinks towards zero
+
+
+def test_forman_flow_uses_strengths():
+    arrays, index = karate()
+    lengths = np.linspace(0.5, 2.0, len(index))
+    assert np.allclose(ricci.curvature(arrays, lengths, "forman"), ricci.forman_ricci(arrays, 1 / lengths))

@@ -178,7 +178,7 @@ curvature(x, y) = 1 − transport cost(cloud x → cloud y) / distance(x, y)
 
 Inside a tightly knit group the two clouds overlap, the transport is cheap and the curvature is positive. On a bridge between groups the clouds are far apart and the curvature is negative. This needs the shortest-path distance between every pair of nodes, so it is limited to graphs of up to 6,000 nodes. Transport problems are solved with POT's network simplex (scipy's HiGHS solver in the browser).
 
-**Forman-Ricci curvature (augmented).** A formula that only looks at a link's two ends: on an unweighted graph it is `4 − degree(x) − degree(y) + 3 × triangles(x, y)`, and the weighted version uses the lengths. It is fast enough for any size, but it is a rougher signal, dominated by degrees.
+**Forman-Ricci curvature (augmented).** A formula that only looks at a link's two ends: on an unweighted graph it is `4 − degree(x) − degree(y) + 3 × triangles(x, y)`. Its weighted version treats a weight as connection strength, so the flow gives it 1 / length. It is fast enough for any size, but it is a rougher signal, dominated by degrees.
 
 **Ricci flow** (Ni et al. 2019). Each iteration computes the curvature and updates every link:
 
@@ -186,7 +186,15 @@ Inside a tightly knit group the two clouds overlap, the transport is cheap and t
 length ← length − step × curvature × length
 ```
 
-then rescales all lengths so they add up to the number of links. Negatively curved links (bridges) grow, positively curved ones shrink. For the flow, Forman curvature is first divided by `degree(x) + degree(y)` and then by its largest absolute value, which puts it in [−1, 1] like Ollivier's. Without the degree division the Forman flow mostly reflects degrees and found no communities at all in stochastic block models in testing. This normalization is a choice made for this project, not taken from a paper; it needs the smaller default step (0.3) to stay stable over many iterations.
+then rescales all lengths so they add up to the number of links. Negatively curved links (bridges) grow, positively curved ones shrink.
+
+For the Forman flow, three choices made for this project (not taken from a paper):
+
+- **Weights are strengths.** Forman gets weight = 1 / length. Feeding it the lengths themselves is a feedback loop: a link the flow stretches looks even more negatively curved and stretches further, and in testing every graph collapsed to a single community within about 150 iterations.
+- **Degree normalization.** The curvature is divided by `degree(x) + degree(y)`, then by its largest absolute value, which puts it in [−1, 1] like Ollivier's. Without the degree division the flow mostly reflects degrees and found no communities in stochastic block models.
+- **Bounded lengths.** Lengths stay between 0.01 and 100 times the average, with a smaller default step (0.3).
+
+With these, Forman results hold steady from 20 to 400 iterations in testing.
 
 **Communities** ("surgery"). Cut every link longer than a threshold; the connected pieces are the communities. By default the threshold is the one, among lengths from the median to the longest link, that gives the highest modularity. Communities are numbered by size, 0 being the largest.
 
@@ -203,14 +211,14 @@ Measured on an Apple M3 Pro with the default settings (α = 0.5, starting length
 | Karate club | Ollivier | 20 | 0.3 s | 4 | 0.491 | 0.385 | 0.588 |
 | Political books | Ollivier | 20 | 0.8 s | 4 | 0.554 | 0.665 | 0.504 |
 | College football | Ollivier | 20 | 1.0 s | 10 | 0.890 | 0.807 | 0.890 |
-| College football | Forman | 20 | 0.3 s | 10 | 0.878 | 0.757 | 0.890 |
+| College football | Forman | 20 | 0.3 s | 16 | 0.916 | 0.853 | 0.890 |
 | SBM, 5 blocks of 40 (p_in 0.3, p_out 0.02) | Ollivier | 20 | 2.7 s | 5 | 1.000 | 1.000 | 1.000 |
-| SBM, same | Forman | 20 | 0.4 s | 5 | 0.729 | 0.466 | 1.000 |
+| SBM, same | Forman | 20 | 0.4 s | 6 | 0.725 | 0.467 | 1.000 |
 | LFR, 500 nodes, μ = 0.2 | Ollivier | 20 | 4.9 s | 12 | 0.972 | 0.971 | 0.978 |
 | email-Eu-core | Ollivier | 10 | 17.8 s | 103 | 0.377 | 0.030 | 0.569 |
-| Cora | Forman | 20 | 0.8 s | 630 | 0.387 | 0.053 | 0.441 |
+| Cora | Forman | 20 | 0.9 s | 608 | 0.399 | 0.074 | 0.441 |
 
-In short: Ollivier-Ricci flow recovers planted communities well and matches Louvain on football and LFR. Forman is several times faster and close on football, but clearly weaker on the block model. On email-Eu-core and Cora the automatic cut leaves many small pieces. The cut threshold is where steering and the manual slider help most.
+In short: Ollivier-Ricci flow recovers planted communities well and matches Louvain on football and LFR. Forman is much faster and does as well on football, but is clearly weaker on the block model, and finds no communities in noisier block models or LFR graphs where the Ollivier flow does. On email-Eu-core and Cora the automatic cut leaves many small pieces. The cut threshold is where steering and the manual slider help most.
 
 ## Web demo and full version
 

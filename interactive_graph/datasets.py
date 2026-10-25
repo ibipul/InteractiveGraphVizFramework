@@ -257,7 +257,7 @@ DATASETS: dict[str, dict[str, Any]] = {
         "truth": "The paper's topic, one of 7 (such as neural networks or reinforcement learning).",
         "expect": "Topics follow citations only loosely and the graph is sparse, so the flow breaks it into "
                   "many small pieces. A hard case for any method.",
-        "reference": "Forman, 20 iterations: 630 communities, NMI 0.39 (Louvain: 0.44).",
+        "reference": "Forman, 20 iterations: 608 communities, NMI 0.40 (Louvain: 0.44).",
         "source": "https://github.com/tkipf/pygcn"},
     "sbm": {
         "title": "Stochastic block model", "size": "synthetic", "load": sbm,
