@@ -82,7 +82,7 @@ def create_app(graph_file: str | Path | None = None) -> FastAPI:
     clients: set[WebSocket] = set()
     flow_thread: dict[str, threading.Thread | None] = {"t": None}
 
-    app = FastAPI(title="Interactive Ricci Flow")
+    app = FastAPI(title="Interactive Ricci Flow for Community Detection in a Network")
     app.state.session = session
 
     async def broadcast(message: dict[str, Any]) -> None:

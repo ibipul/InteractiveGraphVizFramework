@@ -72,13 +72,12 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 ## Using the page
 
-**How to use**, under the title in the top bar, opens a card with the mouse and keyboard controls (it opens by itself on your first visit). The side panel, top to bottom:
+Under the title in the top bar, **How to use** opens a card with the mouse and keyboard controls (it opens by itself on your first visit), and **View** opens the display settings: curvature colours, dotted long links, whether the layout follows the Ricci lengths, labels. The side panel, top to bottom:
 
 1. **Graph.** Pick a dataset (synthetic ones take parameters), press **Load**. **Import file…** reads your own network. **Download results** saves the graph with lengths, curvature and communities, plus node and edge tables. **Save on server** writes the same into `data/results/<time>-<name>/`.
 2. **Ricci flow.** Choose the curvature. `α` is the share of each node's mass that stays put (Ollivier only), `Step` how far each iteration moves the lengths (default 1 for Ollivier, 0.3 for Forman), `Iterations` how many to run (0 runs until you press **Stop**). **Run** / **Stop** (Space), **Step once** (S). **Unpin all** (Shift+P) releases every pinned link and every node you dragged into place, keeping the current lengths. **Reset** sets every length back to its starting value (1 / capacity, capacity, or all 1) and unpins all links and nodes. The chart shows modularity, NMI and ARI by iteration.
 3. **Communities.** The count, modularity and, with ground truth, NMI and ARI. Untick **Cut where modularity is highest** to choose the cut length with the slider. **Compare with Louvain** scores Louvain's communities the same way. Colour nodes by the **Found** communities, the **Ground truth**, the **Mismatches**, or the editor **Group**. Click a community chip to select all of its nodes. With ground truth, the **Found vs ground truth** table follows (see [Comparing with the ground truth](#comparing-with-the-ground-truth)).
 4. **Selection and steering.** Details of what you selected and the steering buttons (next section).
-5. **View.** Curvature colours, dotted long links, whether the layout follows the Ricci lengths, labels.
 
 On the canvas:
 

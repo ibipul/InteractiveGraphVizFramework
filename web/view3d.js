@@ -40,7 +40,7 @@ export async function createView3D(container, api) {
     .nodeResolution(12)
     .linkColor((l) => api.linkColor(l))
     .linkWidth((l) => api.linkWidth(l))
-    .linkOpacity(0.6)
+    .linkOpacity(0.9)
     .onNodeClick((d, e) => api.clickNode(d.id, e.shiftKey))
     .onLinkClick((l, e) => api.clickLink(id(l.source), id(l.target), e.shiftKey))
     .onBackgroundClick((e) => api.clickBackground(e.shiftKey))

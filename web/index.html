@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Interactive Ricci Flow</title>
+  <title>Interactive Ricci Flow for Community Detection in a Network</title>
   <meta name="description" content="Interactive graph editor for Ricci-flow community detection with human-in-the-loop steering.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 9L24 12L14 24Z' stroke='%2364748b' stroke-width='2' fill='none' stroke-dasharray='3 2'/%3E%3Ccircle cx='8' cy='9' r='5' fill='%234e79a7'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23f28e2b'/%3E%3Ccircle cx='14' cy='24' r='5' fill='%2359a14f'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css">
@@ -11,8 +11,11 @@
 <body>
   <header class="bar">
     <div class="brand">
-      <h1>Interactive Ricci Flow</h1>
-      <button id="help-toggle" class="help-link" aria-expanded="false" aria-controls="help">How to use ▾</button>
+      <h1>Interactive Ricci Flow for Community Detection in a Network</h1>
+      <div class="brand-links">
+        <button id="help-toggle" class="help-link" aria-expanded="false" aria-controls="help">How to use ▾</button>
+        <button id="view-toggle" class="help-link" aria-expanded="false" aria-controls="view-pop">View ▾</button>
+      </div>
     </div>
     <span id="status" class="status" title="Connection status">Connecting…</span>
     <div class="bar-actions">
@@ -41,6 +44,13 @@
       <div id="legend" class="legend" hidden></div>
       <div id="busy" class="busy" hidden></div>
       <div id="toast" class="toast" role="status" hidden></div>
+      <div id="view-pop" class="help-pop view-pop" role="dialog" aria-label="View" hidden>
+        <div class="help-head"><b>View</b><button id="view-close" class="small" aria-label="Close">×</button></div>
+        <label class="toggle"><input id="v-curv" type="checkbox" checked> Colour links by curvature</label>
+        <label class="toggle"><input id="v-dots" type="checkbox" checked> Long links become dotted</label>
+        <label class="toggle"><input id="v-layout" type="checkbox" checked> Layout follows Ricci lengths</label>
+        <label class="toggle"><input id="v-labels" type="checkbox"> Show labels</label>
+      </div>
       <div id="help" class="help-pop" role="dialog" aria-label="How to use" hidden>
         <div class="help-head"><b>How to use</b><button id="help-close" class="small" aria-label="Close">×</button></div>
           <dl class="help">
@@ -141,13 +151,6 @@
         <div id="inspector" class="inspector"></div>
       </details>
 
-      <details>
-        <summary>View</summary>
-        <label class="toggle"><input id="v-curv" type="checkbox" checked> Colour links by curvature</label>
-        <label class="toggle"><input id="v-dots" type="checkbox" checked> Long links become dotted</label>
-        <label class="toggle"><input id="v-layout" type="checkbox" checked> Layout follows Ricci lengths</label>
-        <label class="toggle"><input id="v-labels" type="checkbox"> Show labels</label>
-      </details>
 
 
     </aside>

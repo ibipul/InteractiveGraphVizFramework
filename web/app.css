@@ -6,7 +6,7 @@
   --muted: #667085;
   --accent: #2f6fde;
   --accent-text: #ffffff;
-  --link: #9aa3b2;
+  --link: #7b8494;
   --select: #e8a317;
   --pin: #8b5cf6;
   --ok: #1f9d55;
@@ -27,7 +27,7 @@
     --text: #e4e8ee;
     --muted: #8d97a7;
     --accent: #5b8ff0;
-    --link: #5f6878;
+    --link: #7b8494;
     --canvas: #161a21;
     --grid: #1f252e;
     --note: #2b2615;
@@ -66,6 +66,7 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-
 
 .bar h1 { font-size: 16px; margin: 0; font-weight: 650; line-height: 1.2; }
 .brand { display: flex; flex-direction: column; align-items: flex-start; }
+.brand-links { display: flex; gap: 14px; }
 .help-link {
   border: 0; background: none; padding: 0; margin-top: 1px;
   font-size: 12px; color: var(--accent); cursor: pointer;
@@ -78,6 +79,7 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15); padding: 12px 14px;
 }
+.view-pop { width: min(300px, calc(100% - 24px)); }
 .help-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 
 .bar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }

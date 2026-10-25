@@ -61,7 +61,13 @@ function redraw() {
 const palette = [...d3.schemeTableau10, "#86bcb6", "#d37295", "#a0cbe8", "#ffbe7d", "#8cd17d",
   "#b6992d", "#499894", "#f1ce63", "#d4a6c8", "#9d7660"];
 const colorAt = (i) => (i < palette.length ? palette[i] : d3.interpolateRainbow((i * 0.618034) % 1));
-const curvColors = d3.range(11).map((i) => d3.interpolateRdBu(i / 10));
+// Curvature: red (negative) → grey (0) → blue (positive). The midpoint is a
+// mid grey, not white, so links with curvature near 0 stay visible on a light
+// canvas; every step keeps at least 3:1 contrast on both themes.
+const CURV = { negative: "#c8413c", zero: "#7b8494", positive: "#2a63c6" };
+const curvColors = d3.range(11).map((i) => (i <= 5
+  ? d3.interpolateLab(CURV.negative, CURV.zero)(i / 5)
+  : d3.interpolateLab(CURV.zero, CURV.positive)((i - 5) / 5)));
 let commSizes = [];
 
 const comparison = () => snap?.analysis?.communities?.comparison;
@@ -131,10 +137,10 @@ function draw() {
     if (!b) batches.set(key, (b = { ci, di, faded, links: [] }));
     b.links.push(l);
   }
-  const lw = (links.length > 5000 ? 0.7 : 1.3) / k;
+  const lw = (links.length > 5000 ? 0.9 : 1.6) / k;
   for (const { ci, di, faded, links: batch } of batches.values()) {
     ctx.strokeStyle = ci === -2 ? css("--pin") : ci < 0 ? plain : curvColors[ci];
-    ctx.globalAlpha = faded ? 0.07 : di >= 3 ? 0.45 : 0.85;
+    ctx.globalAlpha = faded ? 0.07 : di >= 3 ? 0.65 : 0.95;
     ctx.lineWidth = ci === -2 ? lw * 1.6 : lw;
     ctx.setLineDash(DASHES[di].map((v) => v / k));
     strokeLinks(batch);
@@ -456,7 +462,7 @@ window.addEventListener("keydown", (e) => {
     case "f": case "F": fit(); break;
     case " ": toggleRun(); break;
     case "s": case "S": flowOnce(); break;
-    case "Escape": if (!$("help").hidden) setHelp(false); else clearSelection(); break;
+    case "Escape": if (openCard()) setCard(openCard(), false); else clearSelection(); break;
     case "[": if (hasSel) steer("pull"); break;
     case "]": if (hasSel) steer("push"); break;
     case "P": if (e.shiftKey) { unpinAll(); break; } if (hasSel) steer("pin"); break;
@@ -718,7 +724,7 @@ const api3d = {
     const ci = linkColorIndex(l);
     let c = l.pinned ? css("--pin") : ci < 0 ? css("--link") : curvColors[ci];
     if (focus && !(inF(l.source) && inF(l.target))) return fade(c, 0.93);
-    return fade(c, [0, 0.3, 0.5, 0.68, 0.82][dashIndex(l)]);  // stretched links fade out
+    return fade(c, [0, 0.15, 0.3, 0.42, 0.55][dashIndex(l)]);  // stretched links fade, but stay visible
   },
   linkWidth: (l) => {
     const s = typeof l.source === "object" ? l.source.id : l.source, t = typeof l.target === "object" ? l.target.id : l.target;
@@ -1296,18 +1302,30 @@ $("save-server").onclick = async () => {
   toast(body.message || body.error);
 };
 
-// "How to use" opens by itself on a first visit; once closed it stays closed.
-function setHelp(open) {
-  $("help").hidden = !open;
-  $("help-toggle").setAttribute("aria-expanded", String(open));
-  $("help-toggle").textContent = open ? "How to use ▴" : "How to use ▾";
-  if (!open) try { localStorage.setItem("help-seen", "1"); } catch { /* ignore */ }
+// Cards that open from the links under the title; one at a time.
+const CARDS = { help: ["help", "help-toggle", "How to use"], view: ["view-pop", "view-toggle", "View"] };
+
+function setCard(name, open) {
+  for (const [other, [card, link, label]] of Object.entries(CARDS)) {
+    const show = other === name ? open : open ? false : !$(card).hidden;
+    $(card).hidden = !show;
+    $(link).setAttribute("aria-expanded", String(show));
+    $(link).textContent = `${label} ${show ? "▴" : "▾"}`;
+  }
+  // "How to use" opens by itself on a first visit; once closed it stays closed.
+  if (name === "help" && !open) try { localStorage.setItem("help-seen", "1"); } catch { /* ignore */ }
 }
+const openCard = () => Object.keys(CARDS).find((name) => !$(CARDS[name][0]).hidden);
+
 let helpSeen = false;
 try { helpSeen = localStorage.getItem("help-seen") === "1"; } catch { /* no storage */ }
-setHelp(!helpSeen);
-$("help-toggle").onclick = () => setHelp($("help").hidden);
-$("help-close").onclick = () => setHelp(false);
+setCard("help", !helpSeen);
+for (const name of Object.keys(CARDS)) {
+  const [card, link] = CARDS[name];
+  $(link).onclick = () => setCard(name, $(card).hidden);
+}
+$("help-close").onclick = () => setCard("help", false);
+$("view-close").onclick = () => setCard("view", false);
 
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });
