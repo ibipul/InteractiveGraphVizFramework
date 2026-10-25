@@ -398,7 +398,7 @@ window.addEventListener("keydown", (e) => {
     case "f": case "F": fitView(); break;
     case " ": toggleRun(); break;
     case "s": case "S": flowOnce(); break;
-    case "Escape": clearSelection(); break;
+    case "Escape": if (!$("help").hidden) setHelp(false); else clearSelection(); break;
     case "[": if (hasSel) steer("pull"); break;
     case "]": if (hasSel) steer("push"); break;
     case "P": if (e.shiftKey) { unpinAll(); break; } if (hasSel) steer("pin"); break;
@@ -978,13 +978,18 @@ $("save-server").onclick = async () => {
   toast(body.message || body.error);
 };
 
-// Remember whether this viewer collapsed the help.
-try {
-  if (localStorage.getItem("help-collapsed") === "1") $("help").open = false;
-} catch { /* no storage: keep it open */ }
-$("help").addEventListener("toggle", () => {
-  try { localStorage.setItem("help-collapsed", $("help").open ? "0" : "1"); } catch { /* ignore */ }
-});
+// "How to use" opens by itself on a first visit; once closed it stays closed.
+function setHelp(open) {
+  $("help").hidden = !open;
+  $("help-toggle").setAttribute("aria-expanded", String(open));
+  $("help-toggle").textContent = open ? "How to use ▴" : "How to use ▾";
+  if (!open) try { localStorage.setItem("help-seen", "1"); } catch { /* ignore */ }
+}
+let helpSeen = false;
+try { helpSeen = localStorage.getItem("help-seen") === "1"; } catch { /* no storage */ }
+setHelp(!helpSeen);
+$("help-toggle").onclick = () => setHelp($("help").hidden);
+$("help-close").onclick = () => setHelp(false);
 
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });

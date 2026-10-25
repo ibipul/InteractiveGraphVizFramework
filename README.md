@@ -1,6 +1,8 @@
-# Interactive Graph Viz Framework
+# Interactive Ricci Flow
 
 > ### *Ricci-flow community detection you can watch and steer*
+
+<sub>Repository: InteractiveGraphVizFramework, which started in 2018 as a general interactive graph editor.</sub>
 
 A browser workbench for graphs: load a network (a classic dataset, a synthetic benchmark or your own file), run Ricci flow on it with Ollivier-Ricci or Forman-Ricci curvature, and watch communities pull apart as the links between them stretch. While the flow runs you can steer it: pin links, push a group away from the rest, pull a group together, change any link. Results are scored against the ground truth when there is one.
 
@@ -67,7 +69,7 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 ## Using the page
 
-The side panel, top to bottom (the first section, **How to use**, lists the mouse and keyboard controls; collapse it once you know them):
+**How to use**, under the title in the top bar, opens a card with the mouse and keyboard controls (it opens by itself on your first visit). The side panel, top to bottom:
 
 1. **Graph.** Pick a dataset (synthetic ones take parameters), press **Load**. **Import file…** reads your own network. **Download results** saves the graph with lengths, curvature and communities, plus node and edge tables. **Save on server** writes the same into `data/results/<time>-<name>/`.
 2. **Ricci flow.** Choose the curvature. `α` is the share of each node's mass that stays put (Ollivier only), `Step` how far each iteration moves the lengths (default 1 for Ollivier, 0.3 for Forman), `Iterations` how many to run (0 runs until you press **Stop**). **Run** / **Stop** (Space), **Step once** (S). **Unpin all** (Shift+P) releases every pinned link and every node you dragged into place, keeping the current lengths. **Reset** sets every length back to its starting value (1 / capacity, capacity, or all 1) and unpins all links and nodes. The chart shows modularity, NMI and ARI by iteration.

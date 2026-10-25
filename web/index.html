@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Interactive Graph Viz</title>
+  <title>Interactive Ricci Flow</title>
   <meta name="description" content="Interactive graph editor for Ricci-flow community detection with human-in-the-loop steering.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 9L24 12L14 24Z' stroke='%2364748b' stroke-width='2' fill='none' stroke-dasharray='3 2'/%3E%3Ccircle cx='8' cy='9' r='5' fill='%234e79a7'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23f28e2b'/%3E%3Ccircle cx='14' cy='24' r='5' fill='%2359a14f'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <header class="bar">
-    <h1>Interactive Graph Viz</h1>
+    <div class="brand">
+      <h1>Interactive Ricci Flow</h1>
+      <button id="help-toggle" class="help-link" aria-expanded="false" aria-controls="help">How to use ▾</button>
+    </div>
     <span id="status" class="status" title="Connection status">Connecting…</span>
     <div class="bar-actions">
       <div class="seg" role="group" aria-label="Mouse mode">
@@ -33,29 +36,30 @@
       <div id="legend" class="legend" hidden></div>
       <div id="busy" class="busy" hidden></div>
       <div id="toast" class="toast" role="status" hidden></div>
+      <div id="help" class="help-pop" role="dialog" aria-label="How to use" hidden>
+        <div class="help-head"><b>How to use</b><button id="help-close" class="small" aria-label="Close">×</button></div>
+          <dl class="help">
+            <dt>Click</dt><dd>select a node or link</dd>
+            <dt>Shift + click</dt><dd>add to or remove from the selection</dd>
+            <dt>Shift + drag</dt><dd>select everything in a box</dd>
+            <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
+            <dt>Double-click a node</dt><dd>unpin its position</dd>
+            <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
+            <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
+            <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
+            <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>
+            <dt><kbd>P</kbd></dt><dd>pin or unpin the selection's links</dd>
+            <dt><kbd>Shift</kbd>+<kbd>P</kbd></dt><dd>unpin all links and nodes</dd>
+            <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
+            <dt><kbd>Delete</kbd></dt><dd>remove the selection</dd>
+            <dt><kbd>Esc</kbd> / <kbd>F</kbd></dt><dd>clear selection / fit view</dd>
+          </dl>
+          <p class="muted small">Links: colour is curvature (red negative, blue positive), dots mean the flow has stretched the link, purple means pinned. Node colour is the found community, the ground truth, or the editor group.</p>
+        <p class="muted small">New here? Pick a graph under <b>Graph</b>, press <b>Load</b>, then <b>Run</b> under <b>Ricci flow</b>.</p>
+      </div>
     </div>
 
     <aside class="panel">
-      <details id="help" open>
-        <summary>How to use</summary>
-        <dl class="help">
-          <dt>Click</dt><dd>select a node or link</dd>
-          <dt>Shift + click</dt><dd>add to or remove from the selection</dd>
-          <dt>Shift + drag</dt><dd>select everything in a box</dd>
-          <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
-          <dt>Double-click a node</dt><dd>unpin its position</dd>
-          <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
-          <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
-          <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
-          <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>
-          <dt><kbd>P</kbd></dt><dd>pin or unpin the selection's links</dd>
-          <dt><kbd>Shift</kbd>+<kbd>P</kbd></dt><dd>unpin all links and nodes</dd>
-          <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
-          <dt><kbd>Delete</kbd></dt><dd>remove the selection</dd>
-          <dt><kbd>Esc</kbd> / <kbd>F</kbd></dt><dd>clear selection / fit view</dd>
-        </dl>
-        <p class="muted small">Links: colour is curvature (red negative, blue positive), dots mean the flow has stretched the link, purple means pinned. Node colour is the found community, the ground truth, or the editor group.</p>
-      </details>
       <details open>
         <summary>Graph</summary>
         <div class="field-row">

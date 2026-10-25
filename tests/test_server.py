@@ -65,7 +65,7 @@ def test_import_datasets_and_save(tmp_path, monkeypatch):
 
 def test_page_and_static_files(tmp_path):
     client = TestClient(create_app(graph_file=tmp_path / "g.json", model="none"))
-    assert "Interactive Graph Viz" in client.get("/").text
+    assert "Interactive Ricci Flow" in client.get("/").text
     for path in ("/app.js", "/py-worker.js", "/py/interactive_graph/session.py"):
         assert client.get(path).status_code == 200, path
     assert client.get("/api/health").json()["app"] == "interactive-graph"
