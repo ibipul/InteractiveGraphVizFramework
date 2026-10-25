@@ -13,6 +13,7 @@ A browser workbench for graphs: load a network (a classic dataset, a synthetic b
 ![POT](https://img.shields.io/badge/POT-0.9.7-6A5ACD)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.161.1-009688?logo=fastapi&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-7.9.0-F9A03C?logo=d3dotjs&logoColor=white)
+![3d-force-graph](https://img.shields.io/badge/3d--force--graph-1.80.0-000000?logo=threedotjs&logoColor=white)
 ![Pyodide](https://img.shields.io/badge/Pyodide-314.0.7-FFD43B)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -63,6 +64,7 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 - **Steering.** Pin links, set lengths, pull groups together or push them apart while the flow runs; the next iteration builds on your change.
 - **Ground truth.** NMI and adjusted Rand index after every iteration, a chart of both over time, a Louvain baseline, a found-vs-truth table, a Mismatches view, and colours matched so found communities and true classes look alike where they agree. Clicking a node shows its found community and its true class together.
 - **Datasets.** Karate club, political books, college football, email-Eu-core, Cora, stochastic block models and LFR benchmarks, plus import of edge lists (with capacities), GraphML, GML and JSON.
+- **2D and 3D views.** The flat view has every editing gesture; the 3D view (WebGL) lets you rotate around the communities as they separate.
 - **Live and shared.** Every change is saved on the server and pushed to every open tab, so several people can steer the same run.
 - **Results.** Download the graph with lengths, curvature and communities as JSON and CSV, or save them on the server.
 - **Web demo.** With no server, the page runs the same Python package in the browser through [Pyodide](https://pyodide.org).
@@ -96,6 +98,8 @@ On the canvas:
 | <kbd>Delete</kbd> | Remove the selection |
 | <kbd>F</kbd>, <kbd>Esc</kbd> | Fit the view, clear the selection |
 | <kbd>Ctrl/⌘</kbd>+<kbd>Z</kbd>, <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo, redo (not while the flow runs) |
+
+**2D / 3D** in the top bar switches views (remembered in your browser). In 3D, drag to rotate, scroll to zoom, hover a node for its name, click to select (Shift+click adds), click empty space to clear. Steering buttons and keys work the same. Add mode and box select are 2D only. In 3D, links fade instead of turning dotted as the flow stretches them, and a clicked node's groups are shown by colour (green: in both, blue: only in the found community, orange: only in the true class) instead of rings. The 3D library (about 1.2 MB) loads the first time you switch.
 
 What you see: node colour is the community; link colour is curvature (red negative, blue positive); a link gets more dotted the more the flow has stretched it (compared with the median length); purple links are pinned. With **Layout follows Ricci lengths** on, each link pulls its ends towards its Ricci length, so communities drift apart as the flow runs.
 
@@ -279,6 +283,7 @@ interactive_graph/
   server.py      FastAPI app: the page, the /ws WebSocket, import, save, flow thread
 web/
   index.html, app.css, app.js   the page: canvas drawing (D3 force layout), panels, gestures
+  view3d.js      the 3D view (3d-force-graph / three.js), loaded on first use
   py-worker.js   the web demo: runs interactive_graph under Pyodide in a worker
 tests/           pytest tests: reference curvature values, flow, steering, import, server
 run.sh           one-command setup and launch
@@ -318,7 +323,7 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 |---|---|---|
 | Python | 2.7 | 3.11+ |
 | Server | Flask + Flask-SocketIO | FastAPI + plain WebSocket |
-| Front end | D3 v3 on SVG | D3 v7 force layout on canvas |
+| Front end | D3 v3 on SVG | D3 v7 force layout on canvas, plus a 3D WebGL view |
 | Saving edits | Manual (Snapshot / Update) | Automatic, after every edit |
 | Model step | On Update, then a full page reload | Replaced by steering the flow directly |
 | Analysis | – | Ricci flow, communities, ground-truth scores, steering |
@@ -334,6 +339,7 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 - **"networkx could not build this LFR graph"**: raise the minimum community size or lower μ or the average degree, or try another seed.
 - **Ollivier-Ricci is greyed out**: the graph has more than 6,000 nodes; use Forman-Ricci.
 - **The badge says Web demo when I expected Live**: the page could not reach the server. Open it at the address `run.sh` printed, and keep that terminal open.
+- **3D shows nothing or an error**: it needs WebGL; check that hardware acceleration is on in the browser settings. It also downloads the 3D library from cdn.jsdelivr.net on first use.
 - **The web demo is stuck on "Starting Python"**: it needs a current browser with WebAssembly and module workers, and it downloads about 35 MB from cdn.jsdelivr.net.
 
 ## References

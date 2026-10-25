@@ -16,6 +16,10 @@
     </div>
     <span id="status" class="status" title="Connection status">Connecting…</span>
     <div class="bar-actions">
+      <div class="seg" role="group" aria-label="View">
+        <button id="view-2d" class="on" title="Flat view: all editing gestures">2D</button>
+        <button id="view-3d" title="3D view: drag to rotate, scroll to zoom">3D</button>
+      </div>
       <div class="seg" role="group" aria-label="Mouse mode">
         <button id="mode-select" class="on" title="Select, move and steer (V)">Select</button>
         <button id="mode-add" title="Add nodes and links (N)">Add</button>
@@ -33,6 +37,7 @@
   <main>
     <div id="canvas-wrap" class="canvas">
       <canvas id="graph" aria-label="Graph canvas"></canvas>
+      <div id="graph3d" class="graph3d" aria-label="3D graph view" hidden></div>
       <div id="legend" class="legend" hidden></div>
       <div id="busy" class="busy" hidden></div>
       <div id="toast" class="toast" role="status" hidden></div>
@@ -44,7 +49,8 @@
             <dt>Shift + drag</dt><dd>select everything in a box</dd>
             <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
             <dt>Double-click a node</dt><dd>unpin its position</dd>
-            <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
+            <dt>Drag empty space / wheel</dt><dd>pan / zoom (in 3D: rotate / zoom)</dd>
+          <dt>2D / 3D</dt><dd>switch views; Add mode and box select work in 2D</dd>
             <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
             <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
             <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>

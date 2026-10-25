@@ -2,7 +2,10 @@
 // one small message; the backend answers with the full new state, which is
 // drawn here on a canvas. The backend is the Python server over a WebSocket,
 // or, when no server answers (e.g. on GitHub Pages), the same Python package
-// running in this browser through Pyodide (py-worker.js).
+// running in this browser through Pyodide (py-worker.js). The 3D view
+// (view3d.js) draws the same graph in WebGL.
+
+import { createView3D } from "./view3d.js";
 
 const $ = (id) => document.getElementById(id);
 const fmt = (x, d = 3) => (x == null || Number.isNaN(x) ? "–" : Number(x).toFixed(d));
@@ -50,6 +53,7 @@ function resize() {
 new ResizeObserver(resize).observe(canvas);
 
 function redraw() {
+  if (viewMode === "3d") return restyle3d();
   if (!dirty) { dirty = true; requestAnimationFrame(draw); }
 }
 
@@ -276,7 +280,7 @@ const sim = d3.forceSimulation()
   .force("charge", d3.forceManyBody())
   .force("x", d3.forceX(0).strength(0.03))
   .force("y", d3.forceY(0).strength(0.03))
-  .on("tick", redraw);
+  .on("tick", () => (viewMode === "3d" ? sim.stop() : redraw()));
 
 function configureForces() {
   const n = nodes.length;
@@ -284,7 +288,7 @@ function configureForces() {
   const len = (l) => (view.layout && l.length != null ? Math.max(0.3, Math.min(10, l.length / medianLength)) : 1);
   linkForce
     .distance((l) => base * len(l))
-    .strength((l) => (1 / Math.min(degree.get(l.source.id ?? l.source) || 1, degree.get(l.target.id ?? l.target) || 1)) / len(l) ** 2);
+    .strength((l) => Math.min(1, (1 / Math.min(degree.get(l.source.id ?? l.source) || 1, degree.get(l.target.id ?? l.target) || 1)) / len(l) ** 2));
   sim.force("charge").strength(n > 1500 ? -12 : n > 300 ? -25 : -90).distanceMax(400).theta(n > 2000 ? 1.2 : 0.9);
   sim.force("collide", n <= 400 ? d3.forceCollide((d) => radius(d) + 1.5) : null);
   sim.alphaDecay(n > 2000 ? 0.04 : 0.0228);
@@ -412,12 +416,17 @@ canvas.addEventListener("click", (e) => {
     }
     return;
   }
-  if (!e.shiftKey) { sel.nodes.clear(); sel.links.clear(); }
-  const set = d ? sel.nodes : sel.links;
-  const id = d ? d.id : keyOf(l.source.id, l.target.id);
-  if (e.shiftKey && set.has(id)) set.delete(id); else set.add(id);
-  selectionChanged();
+  if (d) selectItem("node", d.id, e.shiftKey);
+  else selectItem("link", keyOf(l.source.id, l.target.id), e.shiftKey);
 });
+
+// Click: select just this; Shift+click: add it, or remove it if already selected.
+function selectItem(kind, id, shift) {
+  if (!shift) { sel.nodes.clear(); sel.links.clear(); }
+  const set = kind === "node" ? sel.nodes : sel.links;
+  if (shift && set.has(id)) set.delete(id); else set.add(id);
+  selectionChanged();
+}
 
 canvas.addEventListener("dblclick", (e) => {
   const d = hitNode(e.offsetX, e.offsetY);
@@ -425,6 +434,7 @@ canvas.addEventListener("dblclick", (e) => {
 });
 
 function setMode(m) {
+  if (m === "add" && viewMode === "3d") return toast("Adding nodes and links works in the 2D view");
   mode = m;
   $("mode-select").classList.toggle("on", m === "select");
   $("mode-add").classList.toggle("on", m === "add");
@@ -443,7 +453,7 @@ window.addEventListener("keydown", (e) => {
   switch (e.key) {
     case "v": case "V": setMode("select"); break;
     case "n": case "N": setMode("add"); break;
-    case "f": case "F": fitView(); break;
+    case "f": case "F": fit(); break;
     case " ": toggleRun(); break;
     case "s": case "S": flowOnce(); break;
     case "Escape": if (!$("help").hidden) setHelp(false); else clearSelection(); break;
@@ -472,6 +482,7 @@ function selectionChanged() {
   inspectorShape = null;
   redraw();
   renderInspector();
+  renderLegend();
 }
 
 // Links a steering action applies to:
@@ -663,6 +674,117 @@ function numberField(label, get, onSet, step, onDelta, onScale) {
   return row;
 }
 
+// ------------------------------------------------------------------ 3D view
+
+let viewMode = "2d";
+let view3d = null;
+let wantView = null;
+try { if (localStorage.getItem("view") === "3d") wantView = "3d"; } catch { /* no storage */ }
+
+// In 3D, a selected node's groups are shown by colour instead of rings.
+const FOCUS = { both: "#59a14f", found: "#4e79a7", truth: "#f28e2b" };
+const fade = (c, t) => d3.interpolateRgb(c, css("--canvas"))(t);
+
+const api3d = {
+  background: () => css("--canvas"),
+  label: (d) => {
+    const names = snap?.graph.meta?.truth_names || [];
+    const parts = [escape(d.label ?? String(d.id))];
+    if (d.community != null) parts.push(`community ${d.community}`);
+    if (d.truth != null) parts.push(`truth: ${escape(names[d.truth] ?? d.truth)}`);
+    return parts.join(" · ");
+  },
+  nodeColor: (d) => {
+    if (sel.nodes.has(d.id) && sel.nodes.size > 1) return css("--select");
+    const focus = focusGroups();
+    if (focus) {
+      if (d.id === focus.node.id) return css("--select");
+      const f = d.community === focus.found, t = focus.truth != null && d.truth === focus.truth;
+      return f && t ? FOCUS.both : f ? FOCUS.found : t ? FOCUS.truth : fade(nodeColor(d), 0.85);
+    }
+    return nodeColor(d);
+  },
+  nodeSize: (d) => {
+    const n = nodes.length;
+    const base = n > 2000 ? 2 : n > 600 ? 4 : 10;
+    return (sel.nodes.has(d.id) ? 3 : 1) * base * (1 + 0.3 * Math.sqrt(Math.max(0, (d.total ?? 1) - 1)));
+  },
+  linkColor: (l) => {
+    const focus = focusGroups();
+    const inF = (end) => {
+      const n = typeof end === "object" ? end : nodeById.get(end);
+      return n && (n.community === focus.found || (focus.truth != null && n.truth === focus.truth));
+    };
+    const ci = linkColorIndex(l);
+    let c = l.pinned ? css("--pin") : ci < 0 ? css("--link") : curvColors[ci];
+    if (focus && !(inF(l.source) && inF(l.target))) return fade(c, 0.93);
+    return fade(c, [0, 0.3, 0.5, 0.68, 0.82][dashIndex(l)]);  // stretched links fade out
+  },
+  linkWidth: (l) => {
+    const s = typeof l.source === "object" ? l.source.id : l.source, t = typeof l.target === "object" ? l.target.id : l.target;
+    const k = keyOf(s, t);
+    return sel.links.has(k) || (sel.nodes.has(s) && sel.nodes.has(t)) ? 1.5 : 0;
+  },
+  linkDistance: (l) => (nodes.length > 1000 ? 18 : 30) * Math.min(5, lengthFactor(l)),  // keep clusters within view
+  linkStrength: (l) => Math.min(1, 0.7 / lengthFactor(l) ** 2),  // above 1 the layout blows up
+  charge: () => (nodes.length > 1500 ? -12 : nodes.length > 300 ? -25 : -60),
+  clickNode: (id, shift) => selectItem("node", id, shift),
+  clickLink: (s, t, shift) => selectItem("link", keyOf(s, t), shift),
+  clickBackground: (shift) => { if (!shift) clearSelection(); },
+};
+
+function lengthFactor(l) {
+  return view.layout && l.length != null ? Math.max(0.3, Math.min(10, l.length / medianLength)) : 1;
+}
+
+let restylePending = false;
+function restyle3d() {
+  if (restylePending || !view3d) return;
+  restylePending = true;
+  requestAnimationFrame(() => { restylePending = false; view3d.restyle(); });
+}
+
+async function setView(next) {
+  if (next === "3d" && !view3d) {
+    showBusy("Loading the 3D view…");
+    try {
+      view3d = await createView3D($("graph3d"), api3d);
+    } catch (err) {
+      showBusy(null);
+      return toast(err.message, 6000);
+    }
+    showBusy(null);
+  }
+  viewMode = next;
+  const is3d = next === "3d";
+  canvas.hidden = is3d;
+  $("graph3d").hidden = !is3d;
+  $("view-2d").classList.toggle("on", !is3d);
+  $("view-3d").classList.toggle("on", is3d);
+  $("mode-add").disabled = is3d;
+  if (is3d && mode === "add") setMode("select");
+  if (is3d) {
+    sim.stop();
+    view3d.resume();
+    view3d.setData(nodes, links, true);  // positions in 3D survive the rebuild
+    setTimeout(() => view3d.fit(), 1500);
+  } else {
+    view3d?.pause();
+    sim.alpha(0.3).restart();
+    dirty = false;
+    redraw();
+  }
+  try { localStorage.setItem("view", next); } catch { /* ignore */ }
+  renderLegend();
+}
+
+function fit() {
+  if (viewMode === "3d") view3d?.fit(); else fitView();
+}
+
+$("view-2d").onclick = () => setView("2d");
+$("view-3d").onclick = () => setView("3d");
+
 // ------------------------------------------------------------------ state from backend
 
 function onMessage(msg) {
@@ -681,7 +803,8 @@ function clearSelectionSoon() { clearPending = true; }
 function applyState(s) {
   snap = s;
   const g = s.graph;
-  if (s.structure !== structure) {
+  const structural = s.structure !== structure;
+  if (structural) {
     structure = s.structure;
     const old = new Map(nodes.map((n) => [n.id, n]));
     const spread = Math.sqrt(g.nodes.length) * 12;
@@ -749,9 +872,11 @@ function applyState(s) {
 
   const running = !!s.analysis?.running;
   if (running && !wasRunning) userMovedView = false;
-  if (!running && wasRunning && !userMovedView) setTimeout(() => fitView(), 600);  // after the layout settles
+  if (!running && wasRunning && !userMovedView) setTimeout(fit, 600);  // after the layout settles
   wasRunning = running;
   if (fitNext && fitView(false)) fitNext = false;
+  if (view3d && viewMode === "3d") view3d.setData(nodes, links, structural);  // 2D-only edits reach 3D on switching
+  if (wantView === "3d" && viewMode === "2d") { wantView = null; setView("3d"); }
   redraw();
   renderPanels();
 }
@@ -984,6 +1109,12 @@ function renderComparison() {
 
 function renderLegend() {
   const lg = $("legend");
+  if (viewMode === "3d" && focusGroups()) {
+    const dot = (c) => `<span class="swatch" style="background:${c};display:inline-block;margin-right:4px"></span>`;
+    lg.hidden = false;
+    lg.innerHTML = `${dot(FOCUS.both)}in both<br>${dot(FOCUS.found)}only in the found community<br>${dot(FOCUS.truth)}only in the true class`;
+    return;
+  }
   const hasCurv = view.curv && links.some((l) => l.curvature != null);
   lg.hidden = !hasCurv;
   if (!hasCurv) return;
@@ -1180,11 +1311,15 @@ $("help-close").onclick = () => setHelp(false);
 
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });
-$("fit").onclick = () => fitView();
+$("fit").onclick = () => fit();
 $("v-curv").onchange = (e) => { view.curv = e.target.checked; renderLegend(); redraw(); };
 $("v-dots").onchange = (e) => { view.dots = e.target.checked; redraw(); };
 $("v-labels").onchange = (e) => { view.labels = e.target.checked; redraw(); };
-$("v-layout").onchange = (e) => { view.layout = e.target.checked; configureForces(); sim.alpha(0.5).restart(); };
+$("v-layout").onchange = (e) => {
+  view.layout = e.target.checked;
+  configureForces();
+  if (viewMode === "3d") view3d?.relayout(); else sim.alpha(0.5).restart();
+};
 
 function download(name, text) {
   const a = el("a");
