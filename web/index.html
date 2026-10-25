@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Interactive Graph Viz</title>
-  <meta name="description" content="Draw a graph in the browser, change node and link loads on the fly, and run a model step on it.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 9L24 12L14 24Z' stroke='%2364748b' stroke-width='2' fill='none'/%3E%3Ccircle cx='8' cy='9' r='5' fill='%234e79a7'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23f28e2b'/%3E%3Ccircle cx='14' cy='24' r='5' fill='%2359a14f'/%3E%3C/svg%3E">
+  <meta name="description" content="Interactive graph editor for Ricci-flow community detection with human-in-the-loop steering.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 9L24 12L14 24Z' stroke='%2364748b' stroke-width='2' fill='none' stroke-dasharray='3 2'/%3E%3Ccircle cx='8' cy='9' r='5' fill='%234e79a7'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23f28e2b'/%3E%3Ccircle cx='14' cy='24' r='5' fill='%2359a14f'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -13,61 +13,137 @@
     <h1>Interactive Graph Viz</h1>
     <span id="status" class="status" title="Connection status">Connecting…</span>
     <div class="bar-actions">
+      <div class="seg" role="group" aria-label="Mouse mode">
+        <button id="mode-select" class="on" title="Select, move and steer (V)">Select</button>
+        <button id="mode-add" title="Add nodes and links (N)">Add</button>
+      </div>
       <button id="undo" title="Undo (Ctrl/⌘+Z)" disabled>Undo</button>
       <button id="redo" title="Redo (Ctrl/⌘+Shift+Z)" disabled>Redo</button>
-      <span class="sep"></span>
-      <button id="step" class="primary" title="Run the model step (S)">Step</button>
-      <label class="toggle" title="Run the model step after every edit">
-        <input id="auto-step" type="checkbox"> Auto-step
-      </label>
+      <button id="fit" title="Fit the graph in view (F)">Fit</button>
     </div>
   </header>
+  <div id="demo-note" class="demo-note" hidden>
+    Web demo: Python runs in your browser, on small graphs. For the real datasets, larger graphs and live steering shared between several people, clone
+    <a href="https://github.com/ibipul/InteractiveGraphVizFramework">the repository</a> and run <code>./run.sh</code>.
+  </div>
 
   <main>
-    <div id="canvas" class="canvas" aria-label="Graph canvas">
-      <svg id="graph"></svg>
+    <div id="canvas-wrap" class="canvas">
+      <canvas id="graph" aria-label="Graph canvas"></canvas>
+      <div id="legend" class="legend" hidden></div>
+      <div id="busy" class="busy" hidden></div>
       <div id="toast" class="toast" role="status" hidden></div>
     </div>
 
     <aside class="panel">
-      <section>
-        <h2>Selection</h2>
-        <div id="inspector" class="inspector">
-          <p class="muted">Click a node or link to see and edit it.</p>
+      <details open>
+        <summary>Graph</summary>
+        <div class="field-row">
+          <select id="dataset" aria-label="Dataset"></select>
+          <button id="load-dataset" class="primary">Load</button>
         </div>
-      </section>
-
-      <section>
-        <h2>Graph</h2>
-        <p id="counts" class="muted">–</p>
+        <p id="dataset-about" class="muted small"></p>
+        <div id="dataset-params" class="params"></div>
+        <p id="graph-info" class="info"></p>
         <div class="row">
-          <button id="download" title="Save the graph as a JSON file">Download JSON</button>
-          <label class="button" title="Open a graph JSON file">
-            Load JSON <input id="load" type="file" accept=".json,application/json" hidden>
+          <label class="button" title="Edge list (CSV/TSV), GraphML, GML or JSON">
+            Import file… <input id="import" type="file" accept=".csv,.tsv,.txt,.edges,.edgelist,.dat,.graphml,.gml,.json" hidden>
           </label>
+          <button id="download-results" title="Graph with lengths, curvature and communities, plus the run history">Download results</button>
+          <button id="save-server" title="Write graph, node and edge tables and history to data/results/ on the server">Save on server</button>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Ricci flow</summary>
+        <div class="seg wide" role="group" aria-label="Curvature">
+          <button id="m-ollivier" data-method="ollivier">Ollivier-Ricci</button>
+          <button id="m-forman" data-method="forman">Forman-Ricci</button>
+        </div>
+        <p id="method-note" class="muted small"></p>
+        <div class="grid3">
+          <label title="Share of each node's mass that stays put (Ollivier only)">α <input id="alpha" type="number" min="0" max="0.99" step="0.05"></label>
+          <label title="How far each iteration moves the lengths (0-1)">Step <input id="step" type="number" min="0.01" max="1" step="0.05"></label>
+          <label title="Iterations per run; 0 runs until you press Stop">Iterations <input id="iterations" type="number" min="0" step="5"></label>
         </div>
         <div class="row">
-          <button id="example" title="Replace the graph with the example graph">Load example</button>
-          <button id="clear" title="Remove all nodes and links">Clear</button>
+          <button id="run" class="primary" title="Run or stop the flow (Space)">Run</button>
+          <button id="once" title="One iteration (S)">Step once</button>
+          <span class="grow"></span>
+          <select id="reset-mode" aria-label="Starting lengths" title="Starting lengths">
+            <option value="inverse">1 / capacity</option>
+            <option value="capacity">capacity</option>
+            <option value="uniform">all 1</option>
+          </select>
+          <button id="reset" title="Set every length back to the starting value and unpin all links">Reset</button>
         </div>
-      </section>
+        <p id="flow-status" class="info"></p>
+        <canvas id="chart" class="chart" height="110" hidden></canvas>
+        <p id="chart-legend" class="muted small" hidden></p>
+      </details>
 
-      <section>
-        <h2>How to use</h2>
+      <details open>
+        <summary>Communities</summary>
+        <div id="comm-summary" class="info"></div>
+        <label class="toggle"><input id="cut-auto" type="checkbox" checked> Cut where modularity is highest</label>
+        <div class="field-row">
+          <input id="cutoff" type="range" min="0" max="1" step="0.001" disabled aria-label="Cut links longer than">
+          <span id="cutoff-value" class="mono small"></span>
+        </div>
+        <div class="row">
+          <button id="louvain" title="Louvain communities, for comparison">Compare with Louvain</button>
+        </div>
+        <p id="louvain-result" class="muted small"></p>
+        <div class="row-label">Colour nodes by</div>
+        <div class="seg wide" role="group" aria-label="Node colour">
+          <button data-color="community" class="on">Found</button>
+          <button data-color="truth">Ground truth</button>
+          <button data-color="group">Group</button>
+        </div>
+        <div id="comm-list" class="comm-list"></div>
+      </details>
+
+      <details open>
+        <summary>Selection and steering</summary>
+        <div id="inspector" class="inspector"></div>
+      </details>
+
+      <details>
+        <summary>View</summary>
+        <label class="toggle"><input id="v-curv" type="checkbox" checked> Colour links by curvature</label>
+        <label class="toggle"><input id="v-dots" type="checkbox" checked> Long links become dotted</label>
+        <label class="toggle"><input id="v-layout" type="checkbox" checked> Layout follows Ricci lengths</label>
+        <label class="toggle"><input id="v-labels" type="checkbox"> Show labels</label>
+      </details>
+
+      <details>
+        <summary>How to use</summary>
         <dl class="help">
-          <dt>Click empty space</dt><dd>add a node</dd>
-          <dt>Drag node → node</dt><dd>add a link</dd>
-          <dt>Shift + drag node</dt><dd>move and pin it</dd>
-          <dt>Double-click node</dt><dd>unpin it</dd>
+          <dt>Click</dt><dd>select a node or link</dd>
+          <dt>Shift + click</dt><dd>add to or remove from the selection</dd>
+          <dt>Shift + drag</dt><dd>select everything in a box</dd>
+          <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
+          <dt>Double-click a node</dt><dd>unpin its position</dd>
           <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
-          <dt>Click node or link</dt><dd>select it</dd>
+          <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
+          <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
+          <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>
+          <dt><kbd>P</kbd></dt><dd>pin or unpin the selection's links</dd>
           <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
-          <dt><kbd>Delete</kbd></dt><dd>remove selection</dd>
-          <dt><kbd>S</kbd></dt><dd>run the model step</dd>
-          <dt><kbd>Esc</kbd></dt><dd>clear selection</dd>
+          <dt><kbd>Delete</kbd></dt><dd>remove the selection</dd>
+          <dt><kbd>Esc</kbd> / <kbd>F</kbd></dt><dd>clear selection / fit view</dd>
         </dl>
-        <p class="muted small">Node size and link width show the total load; colour shows the node's group.</p>
-      </section>
+        <p class="muted small">Links: colour is curvature (red negative, blue positive), dots mean the flow has stretched the link, purple means pinned. Node colour is the found community, the ground truth, or the editor group.</p>
+      </details>
+
+      <details id="model-section">
+        <summary>Custom model step</summary>
+        <p class="muted small">Runs the Python function set with <code>MODEL=module:function</code> (see the README).</p>
+        <div class="row">
+          <button id="model-step">Run model step</button>
+          <label class="toggle"><input id="auto-step" type="checkbox"> After every edit</label>
+        </div>
+      </details>
     </aside>
   </main>
 

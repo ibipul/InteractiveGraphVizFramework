@@ -1,5 +1,5 @@
-# Publishes web/ as the live demo on GitHub Pages. With no server behind it,
-# the page runs edits and the example model step in the browser.
+# Publishes the web demo to GitHub Pages: web/ plus the Python package,
+# which the page runs in the browser through Pyodide when no server answers.
 # One-time setup: Settings → Pages → Source: GitHub Actions.
 name: pages
 
@@ -25,9 +25,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p _site/py/interactive_graph
+          cp -r web/* _site/
+          cp interactive_graph/*.py _site/py/interactive_graph/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

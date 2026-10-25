@@ -15,13 +15,13 @@ die()  { printf '\n  \033[31m✗ %s\033[0m\n\n' "$*" >&2; exit 1; }
 # ---------------------------------------------------------------- 1. Python
 say "[1/4] Checking Python"
 PY=""
-for candidate in "${PYTHON:-}" python3 python3.13 python3.12 python3.11 python3.10; do
+for candidate in "${PYTHON:-}" python3 python3.13 python3.12 python3.11; do
   [ -n "$candidate" ] || continue
-  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
     PY="$candidate"; break
   fi
 done
-[ -n "$PY" ] || die "Python 3.10 or newer is required (found: $(python3 --version 2>&1)). Install it, or run: PYTHON=/path/to/python3.11 ./run.sh"
+[ -n "$PY" ] || die "Python 3.11 or newer is required (found: $(python3 --version 2>&1)). Install it, or run: PYTHON=/path/to/python3.11 ./run.sh"
 ok "Using $("$PY" --version 2>&1)"
 
 # ---------------------------------------------------------------- 2. Dependencies
