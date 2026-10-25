@@ -376,6 +376,46 @@ def louvain(arrays: EdgeArrays, seed: int = 0) -> np.ndarray:
     return _rank_by_size(labels)
 
 
+# ---------------------------------------------------------------- compare with ground truth
+
+def compare_to_truth(labels: np.ndarray, truth: np.ndarray, n_truth: int,
+                     n_found: int | None = None, max_rows: int = 300) -> dict[str, Any]:
+    """How found communities line up with ground-truth classes.
+
+    labels and truth cover the nodes that have a ground truth; n_found is the
+    total number of communities (some may have no such nodes). Returns:
+      table      overlap counts, found community x truth class (first max_rows communities)
+      main       each community's most common truth class (-1 if it has no such nodes)
+      colour     a palette index per community: the truth class it is matched to one-to-one
+                 (best total overlap), or n_truth + k for communities left unmatched
+      purity     share of nodes that belong to their community's main class
+      mismatches number of nodes that don't
+    """
+    from scipy.optimize import linear_sum_assignment
+
+    n_found = max(n_found or 0, int(labels.max()) + 1 if len(labels) else 0)
+    n_truth = max(n_truth, int(truth.max()) + 1 if len(truth) else 0)
+    table = np.zeros((n_found, n_truth), dtype=np.int64)
+    np.add.at(table, (labels, truth), 1)
+    main = np.where(table.sum(1) > 0, table.argmax(1), -1)
+    agree = int(table.max(1).sum()) if n_found else 0
+
+    colour = np.full(n_found, -1)
+    rows, cols = linear_sum_assignment(-table) if n_found and n_truth else ([], [])
+    for r, c in zip(rows, cols):
+        if table[r, c] > 0:
+            colour[r] = c
+    extra = n_truth
+    for r in range(n_found):
+        if colour[r] < 0:
+            colour[r] = extra
+            extra += 1
+
+    return {"table": table[:max_rows].tolist(), "main": main.tolist(), "colour": colour.tolist(),
+            "purity": agree / len(labels) if len(labels) else 0.0,
+            "mismatches": len(labels) - agree, "known": int(len(labels))}
+
+
 # ---------------------------------------------------------------- scores
 
 def _contingency(a: np.ndarray, b: np.ndarray) -> np.ndarray:

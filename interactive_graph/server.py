@@ -8,15 +8,12 @@ gets the state after each iteration; edits from any tab steer it.
 
 Settings (environment variables):
     GRAPH_FILE  where the graph is saved (default: data/graph.json)
-    MODEL       the step function, as module:function
-                (default: interactive_graph.model:step; "none" disables it)
 """
 
 from __future__ import annotations
 
 import asyncio
 import csv
-import importlib
 import io
 import json
 import logging
@@ -32,7 +29,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import datasets, importer
-from .graph import GraphError, StepFn, normalize
+from .graph import GraphError, normalize
 from .session import Session
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,13 +39,6 @@ PUBLISH_EVERY = 0.25   # seconds between state messages while the flow runs
 SAVE_EVERY = 5.0       # seconds between saves while the flow runs
 
 log = logging.getLogger("interactive_graph")
-
-
-def load_step(spec: str) -> StepFn | None:
-    if spec.lower() == "none":
-        return None
-    module, _, func = spec.partition(":")
-    return getattr(importlib.import_module(module), func or "step")
 
 
 def read_graph(path: Path) -> dict[str, Any]:
@@ -85,10 +75,9 @@ def results_tables(graph: dict[str, Any]) -> tuple[str, str]:
     return nodes.getvalue(), edges.getvalue()
 
 
-def create_app(graph_file: str | Path | None = None, model: str | None = None) -> FastAPI:
+def create_app(graph_file: str | Path | None = None) -> FastAPI:
     path = Path(graph_file or os.environ.get("GRAPH_FILE", ROOT / "data" / "graph.json"))
-    session = Session(read_graph(path),
-                      load_step(model or os.environ.get("MODEL", "interactive_graph.model:step")))
+    session = Session(read_graph(path))
     state = session.state
     clients: set[WebSocket] = set()
     flow_thread: dict[str, threading.Thread | None] = {"t": None}
@@ -217,7 +206,7 @@ def create_app(graph_file: str | Path | None = None, model: str | None = None) -
                 except (GraphError, KeyError, TypeError, ValueError) as e:
                     await ws.send_json({"type": "error", "message": str(e)})
                     continue
-                except Exception as e:  # e.g. a bug in a model step or a failed download
+                except Exception as e:  # e.g. a failed download
                     log.exception("op failed: %s", op.get("op"))
                     await ws.send_json({"type": "error", "message": f"{type(e).__name__}: {e}"})
                     continue

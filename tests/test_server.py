@@ -40,7 +40,7 @@ def test_edits_are_saved_and_broadcast(tmp_path):
 
 
 def test_flow_runs_on_a_thread_and_streams(tmp_path):
-    client = TestClient(create_app(graph_file=tmp_path / "g.json", model="none"))
+    client = TestClient(create_app(graph_file=tmp_path / "g.json"))
     with client.websocket_connect("/ws") as ws:
         ws.receive_json()
         ws.send_json({"op": "flow_start", "settings": {"method": "ollivier", "iterations": 8}})
@@ -52,7 +52,7 @@ def test_flow_runs_on_a_thread_and_streams(tmp_path):
 def test_import_datasets_and_save(tmp_path, monkeypatch):
     import interactive_graph.server as server
     monkeypatch.setattr(server, "ROOT", tmp_path)
-    client = TestClient(create_app(graph_file=tmp_path / "g.json", model="none"))
+    client = TestClient(create_app(graph_file=tmp_path / "g.json"))
     assert {d["id"] for d in client.get("/api/datasets").json()} >= {"karate", "sbm", "lfr", "cora"}
     r = client.post("/api/import?name=x.csv", content=b"a,b,2\nb,c,3\nc,a,1\n")
     assert r.status_code == 200 and "3 nodes, 3 edges" in r.json()["message"]
@@ -64,7 +64,7 @@ def test_import_datasets_and_save(tmp_path, monkeypatch):
 
 
 def test_page_and_static_files(tmp_path):
-    client = TestClient(create_app(graph_file=tmp_path / "g.json", model="none"))
+    client = TestClient(create_app(graph_file=tmp_path / "g.json"))
     assert "Interactive Ricci Flow" in client.get("/").text
     for path in ("/app.js", "/py-worker.js", "/py/interactive_graph/session.py"):
         assert client.get(path).status_code == 200, path

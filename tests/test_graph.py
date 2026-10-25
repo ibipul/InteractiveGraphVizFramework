@@ -3,12 +3,11 @@ import copy
 import pytest
 
 from interactive_graph.graph import GraphError, GraphState, normalize
-from interactive_graph.model import step
 
 
-def make(step_fn=None):
+def make():
     return GraphState({"nodes": [{"id": 0}, {"id": 1}, {"id": 2}],
-                       "links": [{"source": 1, "target": 0}]}, step_fn)
+                       "links": [{"source": 1, "target": 0}]})
 
 
 def test_normalize_fills_defaults_and_cleans_links():
@@ -84,33 +83,15 @@ def test_undo_redo():
     assert s.snapshot()["can_redo"]
 
 
-def test_failed_op_leaves_graph_untouched():
-    def broken(graph):
-        raise RuntimeError("model bug")
-
-    s = make(broken)
-    s.apply({"op": "set_auto_step", "value": True})
-    before = copy.deepcopy(s.graph)
-    with pytest.raises(RuntimeError):
-        s.apply({"op": "add_node"})
-    assert s.graph == before and not s.snapshot()["can_undo"]
-
-
-def test_step_and_auto_step():
-    s = make(step)
-    s.graph["nodes"][0]["current"] = 4
-    s.apply({"op": "step"})
-    assert [n["nval"] for n in s.graph["nodes"]] == [3, 2, 3]
-    assert s.graph["nodes"][0]["current"] == 0
-
-    s.apply({"op": "set_auto_step", "value": True})
-    s.apply({"op": "add_node"})
-    assert [n["nval"] for n in s.graph["nodes"]] == [3, 1, 3, 2]
-
-
-def test_step_without_model_is_an_error():
+def test_failed_op_leaves_graph_untouched(monkeypatch):
     s = make()
+    before = copy.deepcopy(s.graph)
+
+    def half_done(op):
+        s.graph["nodes"][0]["total"] = 99
+        raise GraphError("failed halfway")
+
+    monkeypatch.setattr(s, "_op_adjust", half_done)
     with pytest.raises(GraphError):
-        s.apply({"op": "step"})
-    s.apply({"op": "set_auto_step", "value": True})
-    assert s.auto_step is False
+        s.apply({"op": "adjust", "kind": "node", "id": 0})
+    assert s.graph == before and not s.snapshot()["can_undo"]

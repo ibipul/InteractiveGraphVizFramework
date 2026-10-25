@@ -60,11 +60,27 @@ const colorAt = (i) => (i < palette.length ? palette[i] : d3.interpolateRainbow(
 const curvColors = d3.range(11).map((i) => d3.interpolateRdBu(i / 10));
 let commSizes = [];
 
+const comparison = () => snap?.analysis?.communities?.comparison;
+
+// With a ground truth, each found community wears the colour of the class it
+// matches best (one-to-one), so Found and Ground truth look alike where they agree.
+function communityColor(c) {
+  if (commSizes[c] === 1) return "#b8bcc4";
+  const idx = comparison()?.colour?.[c];
+  return colorAt(idx ?? c);
+}
+
+function isMismatch(d) {
+  const main = comparison()?.main;
+  return !!main && d.truth != null && d.community != null && main[d.community] !== d.truth;
+}
+
 function nodeColor(d) {
   if (colorBy === "truth") return d.truth == null ? "#aaa" : colorAt(d.truth);
   if (colorBy === "group") return colorAt(d.nval);
+  if (colorBy === "mismatch") return isMismatch(d) ? colorAt(d.truth) : css("--faded");
   if (d.community == null) return "#aaa";
-  return commSizes[d.community] === 1 ? "#b8bcc4" : colorAt(d.community);
+  return communityColor(d.community);
 }
 
 function linkColorIndex(l) {
@@ -95,28 +111,29 @@ function draw() {
   ctx.translate(transform.x, transform.y);
   ctx.scale(k, k);
 
-  // Links, batched by colour and dash so a big graph is a few dozen strokes.
+  // With one node selected, its found community and its ground-truth class
+  // stand out and everything else fades.
+  const focus = focusGroups();
+  const inFocus = (n) => !focus || n.community === focus.found || (focus.truth != null && n.truth === focus.truth);
+
+  // Links, batched by colour, dash and fade so a big graph is a few dozen strokes.
   const plain = css("--link");
   const batches = new Map();
   for (const l of links) {
-    const key = (l.pinned ? -2 : linkColorIndex(l)) * 10 + dashIndex(l);
+    const ci = l.pinned ? -2 : linkColorIndex(l), di = dashIndex(l);
+    const faded = focus && !(inFocus(l.source) && inFocus(l.target));
+    const key = `${ci}|${di}|${faded ? 1 : 0}`;
     let b = batches.get(key);
-    if (!b) batches.set(key, (b = []));
-    b.push(l);
+    if (!b) batches.set(key, (b = { ci, di, faded, links: [] }));
+    b.links.push(l);
   }
   const lw = (links.length > 5000 ? 0.7 : 1.3) / k;
-  for (const [key, batch] of batches) {
-    const ci = Math.floor((key + 20) / 10) - 2, di = ((key % 10) + 10) % 10;
+  for (const { ci, di, faded, links: batch } of batches.values()) {
     ctx.strokeStyle = ci === -2 ? css("--pin") : ci < 0 ? plain : curvColors[ci];
-    ctx.globalAlpha = di >= 3 ? 0.45 : 0.85;
+    ctx.globalAlpha = faded ? 0.07 : di >= 3 ? 0.45 : 0.85;
     ctx.lineWidth = ci === -2 ? lw * 1.6 : lw;
     ctx.setLineDash(DASHES[di].map((v) => v / k));
-    ctx.beginPath();
-    for (const l of batch) {
-      ctx.moveTo(l.source.x, l.source.y);
-      ctx.lineTo(l.target.x, l.target.y);
-    }
-    ctx.stroke();
+    strokeLinks(batch);
   }
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
@@ -129,19 +146,21 @@ function draw() {
     strokeLinks(inside);
   }
 
-  // Nodes, batched by colour.
+  // Nodes, batched by colour and fade.
   const byColor = new Map();
   for (const d of nodes) {
-    const c = nodeColor(d);
-    let b = byColor.get(c);
-    if (!b) byColor.set(c, (b = []));
-    b.push(d);
+    const c = nodeColor(d), faded = !inFocus(d);
+    const key = `${c}|${faded ? 1 : 0}`;
+    let b = byColor.get(key);
+    if (!b) byColor.set(key, (b = { c, faded, nodes: [] }));
+    b.nodes.push(d);
   }
   const outline = nodes.length <= 3000;
   ctx.lineWidth = 1.2 / k;
   ctx.strokeStyle = css("--canvas");
-  for (const [c, batch] of byColor) {
+  for (const { c, faded, nodes: batch } of byColor.values()) {
     ctx.fillStyle = c;
+    ctx.globalAlpha = faded ? 0.15 : 1;
     ctx.beginPath();
     for (const d of batch) {
       const r = radius(d);
@@ -151,18 +170,30 @@ function draw() {
     ctx.fill();
     if (outline) ctx.stroke();
   }
+  ctx.globalAlpha = 1;
+
+  // Rings: solid = same found community, dashed = same ground-truth class.
+  if (focus) {
+    ctx.strokeStyle = css("--text");
+    ctx.lineWidth = 1.6 / k;
+    ringNodes(nodes.filter((n) => n.community === focus.found), 2.5 / k);
+    if (focus.truth != null) {
+      ctx.setLineDash([3 / k, 2.5 / k]);
+      ringNodes(nodes.filter((n) => n.truth === focus.truth), 5.5 / k);
+      ctx.setLineDash([]);
+    }
+  }
+  // Mismatches mode: a red ring where the node's true class differs from
+  // the main class of its found community.
+  if (colorBy === "mismatch") {
+    ctx.strokeStyle = css("--err");
+    ctx.lineWidth = 2 / k;
+    ringNodes(nodes.filter(isMismatch), 2 / k);
+  }
   if (sel.nodes.size) {
     ctx.strokeStyle = css("--select");
     ctx.lineWidth = 3 / k;
-    ctx.beginPath();
-    for (const id of sel.nodes) {
-      const d = nodeById.get(id);
-      if (!d) continue;
-      const r = radius(d) + 2 / k;
-      ctx.moveTo(d.x + r, d.y);
-      ctx.arc(d.x, d.y, r, 0, 2 * Math.PI);
-    }
-    ctx.stroke();
+    ringNodes([...sel.nodes].map((id) => nodeById.get(id)).filter(Boolean), 2 / k);
   }
   if (dropTarget) {
     ctx.strokeStyle = css("--accent");
@@ -209,6 +240,23 @@ function draw() {
     ctx.stroke();
     ctx.setLineDash([]);
   }
+}
+
+function ringNodes(list, gap) {
+  ctx.beginPath();
+  for (const d of list) {
+    const r = radius(d) + gap;
+    ctx.moveTo(d.x + r, d.y);
+    ctx.arc(d.x, d.y, r, 0, 2 * Math.PI);
+  }
+  ctx.stroke();
+}
+
+function focusGroups() {
+  if (sel.nodes.size !== 1 || sel.links.size) return null;
+  const d = nodeById.get([...sel.nodes][0]);
+  if (!d || d.community == null) return null;
+  return { node: d, found: d.community, truth: d.truth ?? null };
 }
 
 function strokeLinks(list) {
@@ -519,12 +567,8 @@ function buildInspector(nSel, lSel) {
     title.append(sw, d.label && d.label !== String(d.id) ? `${d.label} (node ${d.id})` : `Node ${d.id}`);
     box.append(title);
     const names = snap.graph.meta?.truth_names || [];
-    box.append(live(el("p", "facts"), () => {
-      const facts = [`${degree.get(d.id) || 0} links`];
-      if (d.community != null) facts.push(`community ${d.community}`);
-      if (d.truth != null) facts.push(`truth: ${names[d.truth] ?? d.truth}`);
-      return facts.join(" · ");
-    }));
+    box.append(live(el("p", "facts"), () => `${degree.get(d.id) || 0} links`));
+    if (d.community != null) box.append(focusDetails(d, names));
     box.append(numberField("Group", () => d.nval, (v) => send({ op: "set", kind: "node", id: d.id, field: "nval", value: v }), 1));
     box.append(numberField("Load", () => d.total, null, 1, (delta) => send({ op: "adjust", kind: "node", id: d.id, delta })));
   } else if (lSel === 1 && !nSel) {
@@ -565,6 +609,43 @@ function buildInspector(nSel, lSel) {
     button("Delete", deleteSelection, "danger"),
   );
   box.append(actions);
+}
+
+// What the canvas highlights for one selected node: its found community
+// (solid rings) and its ground-truth class (dashed rings), and how they overlap.
+function focusDetails(d, names) {
+  const wrap = el("div", "focus");
+  const select = (pred) => () => {
+    sel.nodes = new Set(nodes.filter(pred).map((n) => n.id));
+    sel.links.clear();
+    selectionChanged();
+  };
+  const line = (ring, text, pred) => {
+    const row = el("div", "focus-row");
+    const icon = el("span", `ring ${ring}`);
+    row.append(icon, live(el("span", "grow"), text), button("Select", select(pred), "small", "Select all of these nodes"));
+    return row;
+  };
+  wrap.append(line("solid", () => {
+    const n = nodes.filter((x) => x.community === d.community).length;
+    return `Found community ${d.community} · ${n} nodes`;
+  }, (x) => x.community === d.community));
+  if (d.truth != null) {
+    const label = snap.graph.meta?.truth_label || "ground truth";
+    wrap.append(line("dashed", () => {
+      const n = nodes.filter((x) => x.truth === d.truth).length;
+      return `${label}: ${names[d.truth] ?? d.truth} · ${n} nodes`;
+    }, (x) => x.truth === d.truth));
+    wrap.append(live(el("p", "facts"), () => {
+      let both = 0, onlyFound = 0, onlyTruth = 0;
+      for (const x of nodes) {
+        const f = x.community === d.community, t = x.truth === d.truth;
+        if (f && t) both++; else if (f) onlyFound++; else if (t) onlyTruth++;
+      }
+      return `${both} in both · ${onlyFound} only in the found community · ${onlyTruth} only in the ground truth`;
+    }));
+  }
+  return wrap;
 }
 
 function numberField(label, get, onSet, step, onDelta, onScale) {
@@ -759,10 +840,9 @@ function renderPanels() {
   }
   if (colorBy === "truth" && !truthN) colorBy = "community";
   renderCommunityList();
+  renderComparison();
   renderLegend();
 
-  $("model-section").hidden = !snap.has_model;
-  $("auto-step").checked = snap.auto_step;
 
   renderInspector();
 }
@@ -778,12 +858,15 @@ function renderCommunityList() {
     groups.set(v, (groups.get(v) || 0) + 1);
   }
   const names = field === "truth" ? snap.graph.meta?.truth_names || [] : [];
+  const differ = new Map();
+  if (colorBy === "mismatch") for (const d of nodes) if (isMismatch(d)) differ.set(d.community, (differ.get(d.community) || 0) + 1);
   const sorted = [...groups].sort((a, b) => b[1] - a[1]).slice(0, 40);
   for (const [v, size] of sorted) {
     const chip = el("span", "chip");
     const sw = el("span", "swatch");
-    sw.style.background = field === "community" && size === 1 ? "#b8bcc4" : colorAt(v);
-    chip.append(sw, `${names[v] ?? v} · ${size}`);
+    sw.style.background = field === "community" ? communityColor(v) : colorAt(v);
+    const extra = colorBy === "mismatch" ? ` (${differ.get(v) || 0} differ)` : "";
+    chip.append(sw, `${names[v] ?? v} · ${size}${extra}`);
     chip.title = "Click to select these nodes (Shift+click to add)";
     chip.onclick = (e) => {
       if (!e.shiftKey) { sel.nodes.clear(); sel.links.clear(); }
@@ -793,6 +876,110 @@ function renderCommunityList() {
     list.append(chip);
   }
   if (groups.size > sorted.length) list.append(el("span", "muted small", `+${groups.size - sorted.length} more`));
+}
+
+// Found communities (rows) against ground-truth classes (columns). Cells are
+// node counts, shaded by their share of the row; click one to select those nodes.
+function renderComparison() {
+  const box = $("compare");
+  const c = comparison();
+  const names = snap.graph.meta?.truth_names || [];
+  box.hidden = !c;
+  if (!c) return;
+  const MAX_ROWS = 10, MAX_COLS = 8;
+
+  const count = new Map();             // "community|truth" -> nodes
+  const rowTotal = new Map(), colTotal = new Map();
+  for (const d of nodes) {
+    if (d.truth == null || d.community == null) continue;
+    const key = `${d.community}|${d.truth}`;
+    count.set(key, (count.get(key) || 0) + 1);
+    rowTotal.set(d.community, (rowTotal.get(d.community) || 0) + 1);
+    colTotal.set(d.truth, (colTotal.get(d.truth) || 0) + 1);
+  }
+  const byTotal = (m) => [...m].sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  const allRows = byTotal(rowTotal), allCols = byTotal(colTotal);
+  const rows = allRows.slice(0, MAX_ROWS), cols = allCols.slice(0, MAX_COLS);
+  const otherRows = allRows.length > rows.length, otherCols = allCols.length > cols.length;
+  const shownCols = new Set(cols), shownRows = new Set(rows);
+  const name = (t) => names[t] ?? String(t);
+
+  const cellCount = (r, t) => {
+    let n = 0;
+    for (const [key, v] of count) {
+      const [cr, ct] = key.split("|").map(Number);
+      const rowOk = r === "other" ? !shownRows.has(cr) : cr === r;
+      const colOk = t === "other" ? !shownCols.has(ct) : ct === t;
+      if (rowOk && colOk) n += v;
+    }
+    return n;
+  };
+  const pick = (r, t) => (d) => d.truth != null && d.community != null &&
+    (r === "other" ? !shownRows.has(d.community) : d.community === r) &&
+    (t === "other" ? !shownCols.has(d.truth) : d.truth === t);
+
+  box.replaceChildren();
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  box.append(el("div", "row-label", "Found vs ground truth"));
+  box.append(el("p", "muted small",
+    `Purity ${pct(c.purity)}: ${c.known - c.mismatches} of ${c.known} nodes are in a community whose main ` +
+    `${snap.graph.meta?.truth_label || "class"} is their own; ${c.mismatches} are not (colour by Mismatches to see them). ` +
+    "Found communities take the colour of the class they match best."));
+
+  const table = el("table", "cmp");
+  const head = el("tr");
+  head.append(el("th", "corner", "found ↓ truth →"));
+  for (const t of cols) {
+    const th = el("th");
+    const sw = el("span", "swatch"); sw.style.background = colorAt(t);
+    th.append(sw); th.title = `${name(t)} (${colTotal.get(t)} nodes)`;
+    head.append(th);
+  }
+  if (otherCols) { const th = el("th", "other", "…"); th.title = `${allCols.length - cols.length} more classes`; head.append(th); }
+  head.append(el("th", "main", "main"));
+  table.append(head);
+
+  for (const r of [...rows, ...(otherRows ? ["other"] : [])]) {
+    const tr = el("tr");
+    const th = el("th", "rowh");
+    if (r === "other") {
+      th.append(`+${allRows.length - rows.length}`);
+      th.title = `${allRows.length - rows.length} smaller communities`;
+    } else {
+      const sw = el("span", "swatch"); sw.style.background = communityColor(r);
+      th.append(sw, String(r));
+      th.title = `Found community ${r} (${rowTotal.get(r)} nodes with a ground truth)`;
+    }
+    tr.append(th);
+    const total = r === "other" ? allRows.filter((x) => !shownRows.has(x)).reduce((a, x) => a + rowTotal.get(x), 0) : rowTotal.get(r);
+    for (const t of [...cols, ...(otherCols ? ["other"] : [])]) {
+      const n = cellCount(r, t);
+      const td = el("td", null, n ? String(n) : "");
+      const share = total ? n / total : 0;
+      if (n) {
+        td.style.background = `color-mix(in srgb, var(--accent) ${Math.round(12 + share * 78)}%, transparent)`;
+        if (share > 0.55) td.style.color = "#fff";
+        td.title = `${n} of ${total} nodes in ${r === "other" ? "the smaller communities" : `found community ${r}`} ` +
+          `are ${t === "other" ? "in other classes" : name(t)} (${pct(share)}). Click to select them.`;
+        td.onclick = (e) => {
+          if (!e.shiftKey) { sel.nodes.clear(); sel.links.clear(); }
+          for (const d of nodes.filter(pick(r, t))) sel.nodes.add(d.id);
+          selectionChanged();
+        };
+      }
+      tr.append(td);
+    }
+    const main = el("td", "main");
+    if (r !== "other" && c.main[r] >= 0) {
+      const best = count.get(`${r}|${c.main[r]}`) || 0;
+      main.textContent = `${name(c.main[r])} (${pct(best / total)})`;
+      main.title = `${best} of ${total} nodes are ${name(c.main[r])}`;
+    }
+    tr.append(main);
+    table.append(tr);
+  }
+  box.append(table);
+  box.append(el("p", "muted small", "Cells: nodes in both; darker = larger share of the row. Hover for details, click to select."));
 }
 
 function renderLegend() {
@@ -994,8 +1181,6 @@ $("help-close").onclick = () => setHelp(false);
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });
 $("fit").onclick = () => fitView();
-$("model-step").onclick = () => send({ op: "step" });
-$("auto-step").onchange = (e) => send({ op: "set_auto_step", value: e.target.checked });
 $("v-curv").onchange = (e) => { view.curv = e.target.checked; renderLegend(); redraw(); };
 $("v-dots").onchange = (e) => { view.dots = e.target.checked; redraw(); };
 $("v-labels").onchange = (e) => { view.labels = e.target.checked; redraw(); };

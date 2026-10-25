@@ -28,10 +28,9 @@ import copy
 import json
 import math
 import threading
-from typing import Any, Callable
+from typing import Any
 
 Graph = dict[str, Any]
-StepFn = Callable[[Graph], Graph]
 
 HISTORY_BYTES = 200_000_000   # total size of the undo history
 NODE_EXTRAS = ("label", "truth", "community", "x", "y")
@@ -156,11 +155,9 @@ class GraphState:
     `lock` guards the graph; the Ricci flow thread takes it too.
     """
 
-    def __init__(self, graph: Graph | None = None, step: StepFn | None = None):
+    def __init__(self, graph: Graph | None = None):
         self.graph = normalize(graph) if graph is not None else empty_graph()
         fill_lengths(self.graph)
-        self.step_fn = step
-        self.auto_step = False
         self.version = 0
         self.structure = 0          # bumps when nodes or links are added or removed
         self.busy: str | None = None  # set while the Ricci flow runs
@@ -177,10 +174,8 @@ class GraphState:
             "graph": self.graph,
             "version": self.version,
             "structure": self.structure,
-            "auto_step": self.auto_step,
             "can_undo": bool(self._undo) and not self.busy,
             "can_redo": bool(self._redo) and not self.busy,
-            "has_model": self.step_fn is not None,
             "busy": self.busy,
             "analysis": self.analysis,
         }
@@ -191,11 +186,11 @@ class GraphState:
         handler = getattr(self, f"_op_{name}", None)
         if handler is None:
             raise GraphError(f"unknown op {name!r}")
-        if self.busy and name in ("undo", "redo", "load", "step", "set_auto_step"):
+        if self.busy and name in ("undo", "redo", "load"):
             raise GraphError("stop the Ricci flow first")
 
         with self.lock:
-            if name in ("undo", "redo", "set_auto_step"):
+            if name in ("undo", "redo"):
                 handler(op)
                 self.version += 1
                 return None
@@ -204,15 +199,13 @@ class GraphState:
             shape = (len(self.graph["nodes"]), len(self.graph["links"]))
             try:
                 result = handler(op)
-                if self.auto_step and name not in ("step", "load"):
-                    self._run_step()
             except Exception:
                 self.graph = json.loads(before)  # all or nothing
                 raise
             fill_lengths(self.graph)
             if json.dumps(self.graph) != before:
                 self.checkpoint(before)
-            if name in ("add_node", "add_link", "delete", "delete_many", "step", "load") or \
+            if name in ("add_node", "add_link", "delete", "delete_many", "load") or \
                     shape != (len(self.graph["nodes"]), len(self.graph["links"])):
                 self.structure += 1
             self.version += 1
@@ -259,11 +252,6 @@ class GraphState:
     def _links_by_key(self, pairs: list[Any]) -> list[dict[str, Any]]:
         wanted = {tuple(sorted((int(s), int(t)))) for s, t in pairs}
         return [l for l in self.graph["links"] if (l["source"], l["target"]) in wanted]
-
-    def _run_step(self) -> None:
-        if self.step_fn is None:
-            raise GraphError("no model step is configured")
-        self.graph = normalize(self.step_fn(copy.deepcopy(self.graph)))
 
     # ------------------------------------------------------------ ops
 
@@ -360,15 +348,9 @@ class GraphState:
         for link in self.graph["links"]:
             link.pop("pinned", None)
 
-    def _op_step(self, op: dict[str, Any]) -> None:
-        self._run_step()
-
     def _op_load(self, op: dict[str, Any]) -> None:
         self.graph = normalize(op["graph"])
         self.analysis = {}
-
-    def _op_set_auto_step(self, op: dict[str, Any]) -> None:
-        self.auto_step = bool(op.get("value")) and self.step_fn is not None
 
     def _op_undo(self, op: dict[str, Any]) -> None:
         if self._undo:

@@ -22,7 +22,7 @@ from typing import Any
 import numpy as np
 
 from . import datasets, ricci
-from .graph import GraphError, GraphState, StepFn
+from .graph import GraphError, GraphState
 
 DEFAULTS = {"method": "ollivier", "alpha": 0.5, "step": 1.0, "iterations": 20, "cutoff": None}
 FLOW_OPS = ("flow_start", "flow_stop", "flow_once", "flow_settings", "reset_lengths",
@@ -33,10 +33,9 @@ class Session:
     """`limits` restricts the in-browser demo, e.g.
     {"methods": ["forman"], "max_nodes": 1500, "datasets": ["karate", "sbm", "lfr"]}."""
 
-    def __init__(self, graph: dict[str, Any] | None = None, step: StepFn | None = None,
-                 limits: dict[str, Any] | None = None):
+    def __init__(self, graph: dict[str, Any] | None = None, limits: dict[str, Any] | None = None):
         self.limits = limits or {}
-        self.state = GraphState(graph, step)
+        self.state = GraphState(graph)
         self.settings = dict(DEFAULTS)
         if "methods" in self.limits:
             self.settings["method"] = self.limits["methods"][0]
@@ -60,7 +59,7 @@ class Session:
             if name == "load":
                 self._check_limits(op["graph"])
             result = self.state.apply(op)
-            if name in ("load", "undo", "redo", "step", "delete", "delete_many", "add_link", "add_node"):
+            if name in ("load", "undo", "redo", "delete", "delete_many", "add_link", "add_node"):
                 self.refresh()
             else:
                 self.publish()
@@ -233,13 +232,28 @@ class Session:
 
     # ------------------------------------------------------------ results
 
-    def _scores(self, labels: np.ndarray) -> dict[str, Any]:
+    def _truth(self) -> tuple[np.ndarray, np.ndarray] | None:
+        """Mask of nodes with a ground truth, and their truth values."""
         truth = [n.get("truth") for n in self.state.graph["nodes"]]
-        known = np.array([t is not None for t in truth])
+        known = np.array([t is not None for t in truth], dtype=bool)
         if not known.any():
+            return None
+        return known, np.array([x for x in truth if x is not None], dtype=np.int64)
+
+    def _scores(self, labels: np.ndarray) -> dict[str, Any]:
+        found = self._truth()
+        if found is None:
             return {}
-        t = np.array([x for x in truth if x is not None])
+        known, t = found
         return {"nmi": ricci.nmi(labels[known], t), "ari": ricci.ari(labels[known], t)}
+
+    def _comparison(self, labels: np.ndarray) -> dict[str, Any] | None:
+        found = self._truth()
+        if found is None:
+            return None
+        known, t = found
+        n_truth = len(self.state.graph.get("meta", {}).get("truth_names", []))
+        return ricci.compare_to_truth(labels[known], t, n_truth, n_found=int(labels.max()) + 1)
 
     def _update_communities(self, record: bool = False, kappa: np.ndarray | None = None) -> None:
         g = self.state.graph
@@ -253,7 +267,8 @@ class Session:
         for node, label in zip(g["nodes"], comms.labels):
             node["community"] = int(label)
         info = {"count": comms.count, "cutoff": comms.cutoff, "modularity": comms.modularity,
-                "sizes": np.bincount(comms.labels).tolist()[:60], **self._scores(comms.labels)}
+                "sizes": np.bincount(comms.labels).tolist(), **self._scores(comms.labels),
+                "comparison": self._comparison(comms.labels)}
         if record:
             k = kappa if kappa is not None else np.zeros(0)
             self.history.append({"iteration": self.iteration, "seconds": self.last_seconds,

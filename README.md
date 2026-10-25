@@ -39,6 +39,7 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 - [Features](#features)
 - [Using the page](#using-the-page)
+- [Comparing with the ground truth](#comparing-with-the-ground-truth)
 - [Steering the flow](#steering-the-flow)
 - [Datasets](#datasets)
 - [Importing your own network](#importing-your-own-network)
@@ -60,7 +61,7 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 - **Two curvatures.** Ollivier-Ricci (optimal transport between neighbourhoods; accurate) and augmented Forman-Ricci (a local formula; fast and rough). The values match the [GraphRicciCurvature](https://github.com/saibalmars/GraphRicciCurvature) package.
 - **Ricci flow with community detection.** Each iteration stretches negatively curved links and shrinks positively curved ones. Communities come from cutting the long links, at the cut with the highest modularity or one you choose.
 - **Steering.** Pin links, set lengths, pull groups together or push them apart while the flow runs; the next iteration builds on your change.
-- **Ground truth.** NMI and adjusted Rand index against the true communities after every iteration, a chart of both over time, a Louvain baseline, and node colouring by found or true community.
+- **Ground truth.** NMI and adjusted Rand index after every iteration, a chart of both over time, a Louvain baseline, a found-vs-truth table, a Mismatches view, and colours matched so found communities and true classes look alike where they agree. Clicking a node shows its found community and its true class together.
 - **Datasets.** Karate club, political books, college football, email-Eu-core, Cora, stochastic block models and LFR benchmarks, plus import of edge lists (with capacities), GraphML, GML and JSON.
 - **Live and shared.** Every change is saved on the server and pushed to every open tab, so several people can steer the same run.
 - **Results.** Download the graph with lengths, curvature and communities as JSON and CSV, or save them on the server.
@@ -73,7 +74,7 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 1. **Graph.** Pick a dataset (synthetic ones take parameters), press **Load**. **Import file…** reads your own network. **Download results** saves the graph with lengths, curvature and communities, plus node and edge tables. **Save on server** writes the same into `data/results/<time>-<name>/`.
 2. **Ricci flow.** Choose the curvature. `α` is the share of each node's mass that stays put (Ollivier only), `Step` how far each iteration moves the lengths (default 1 for Ollivier, 0.3 for Forman), `Iterations` how many to run (0 runs until you press **Stop**). **Run** / **Stop** (Space), **Step once** (S). **Unpin all** (Shift+P) releases every pinned link and every node you dragged into place, keeping the current lengths. **Reset** sets every length back to its starting value (1 / capacity, capacity, or all 1) and unpins all links and nodes. The chart shows modularity, NMI and ARI by iteration.
-3. **Communities.** The count, modularity and, with ground truth, NMI and ARI. Untick **Cut where modularity is highest** to choose the cut length with the slider. **Compare with Louvain** scores Louvain's communities the same way. Colour nodes by the **Found** communities, the **Ground truth**, or the editor **Group**. Click a community chip to select all of its nodes.
+3. **Communities.** The count, modularity and, with ground truth, NMI and ARI. Untick **Cut where modularity is highest** to choose the cut length with the slider. **Compare with Louvain** scores Louvain's communities the same way. Colour nodes by the **Found** communities, the **Ground truth**, the **Mismatches**, or the editor **Group**. Click a community chip to select all of its nodes. With ground truth, the **Found vs ground truth** table follows (see [Comparing with the ground truth](#comparing-with-the-ground-truth)).
 4. **Selection and steering.** Details of what you selected and the steering buttons (next section).
 5. **View.** Curvature colours, dotted long links, whether the layout follows the Ricci lengths, labels.
 
@@ -97,6 +98,15 @@ On the canvas:
 | <kbd>Ctrl/⌘</kbd>+<kbd>Z</kbd>, <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo, redo (not while the flow runs) |
 
 What you see: node colour is the community; link colour is curvature (red negative, blue positive); a link gets more dotted the more the flow has stretched it (compared with the median length); purple links are pinned. With **Layout follows Ricci lengths** on, each link pulls its ends towards its Ricci length, so communities drift apart as the flow runs.
+
+## Comparing with the ground truth
+
+Three views answer "how do the found communities relate to the true ones?":
+
+- **Matched colours.** Each found community takes the colour of the true class it overlaps most, matched one-to-one (the best total overlap). Switching between **Found** and **Ground truth** then looks the same wherever the two agree, and only the differences change colour. Found communities left without a match (when there are more found communities than classes) get colours of their own; single-node communities are grey.
+- **Click a node.** Nodes in its found community get a solid ring, nodes in its true class a dashed ring, and everything else fades. The selection panel shows both groups with their sizes ("12 in both · 4 only in the found community · 1 only in the ground truth") and a **Select** button for each.
+- **Found vs ground truth table.** Rows are found communities (largest 10, the rest folded into one row), columns are true classes (largest 8, the rest folded into "…"); each cell counts the nodes in both, shaded by its share of the row. The last column is the row's main class and its share. Click a cell to select those nodes. Above the table, **purity** is the share of nodes that belong to their community's main class.
+- **Mismatches** colouring fades the nodes that agree and shows, in their true class's colour with a red ring, the nodes whose true class differs from the main class of their found community. Each community chip shows how many of its nodes differ.
 
 ## Steering the flow
 
@@ -226,13 +236,11 @@ comms = ricci.find_communities(arrays, result.length)
 print(comms.count, comms.modularity)
 ```
 
-`interactive_graph.datasets.load("football")` returns any of the datasets above in this app's format, and `interactive_graph.session.Session` drives everything the page does (`handle(op)` and `iterate()`).
-
-**Your own model step.** The **Custom model step** section runs a Python function `step(graph) -> graph` on the graph, by default the example in [`interactive_graph/model.py`](interactive_graph/model.py) carried over from the original framework. Point the server at your own with `MODEL=my_project.dynamics:step ./run.sh`; `MODEL=none` hides the section.
+`interactive_graph.datasets.load("football")` returns any of the datasets above in this app's format, and `interactive_graph.session.Session` drives everything the page does (`handle(op)` and `iterate()`). `ricci.compare_to_truth(labels, truth, n_classes)` gives the found-vs-truth table, main classes, purity and matched colours.
 
 ## Graph file format
 
-The same JSON shape is used on disk, for downloads and imports, and by the model step:
+The same JSON shape is used on disk, for downloads and imports:
 
 ```json
 {
@@ -263,13 +271,12 @@ Links are undirected and stored with `source < target`. `web/examples/` has two 
 
 ```
 interactive_graph/
-  ricci.py       Ollivier and Forman curvature, Ricci flow, communities, NMI/ARI, Louvain
+  ricci.py       Ollivier and Forman curvature, Ricci flow, communities, NMI/ARI, truth comparison, Louvain
   session.py     one session: graph edits, the steerable flow loop, results (used by server and browser)
   graph.py       the graph state, every edit, undo/redo
   datasets.py    built-in, downloaded and synthetic graphs with ground truth
   importer.py    edge list, GraphML, GML and JSON import
   server.py      FastAPI app: the page, the /ws WebSocket, import, save, flow thread
-  model.py       example custom model step
 web/
   index.html, app.css, app.js   the page: canvas drawing (D3 force layout), panels, gestures
   py-worker.js   the web demo: runs interactive_graph under Pyodide in a worker
@@ -285,7 +292,6 @@ Set these environment variables in front of `./run.sh`:
 |---|---|---|
 | `PORT` | first free port from 8070 | Use exactly this port |
 | `GRAPH_FILE` | `data/graph.json` | Where the live graph is saved |
-| `MODEL` | `interactive_graph.model:step` | The custom model step, as `module:function`; `none` hides it |
 | `PYTHON` | first Python 3.11+ found | The Python used to create `.venv` |
 | `NO_BROWSER` | unset | Set to anything to not open a browser |
 
@@ -314,7 +320,7 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 | Server | Flask + Flask-SocketIO | FastAPI + plain WebSocket |
 | Front end | D3 v3 on SVG | D3 v7 force layout on canvas |
 | Saving edits | Manual (Snapshot / Update) | Automatic, after every edit |
-| Model step | On Update, then a full page reload | Live, redrawn in place |
+| Model step | On Update, then a full page reload | Replaced by steering the flow directly |
 | Analysis | – | Ricci flow, communities, ground-truth scores, steering |
 | Multiple tabs | Independent | Kept in sync |
 | Online demo | – | GitHub Pages, with Python in the browser |

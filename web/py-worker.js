@@ -8,7 +8,7 @@
 
 import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs";
 
-const FILES = ["__init__.py", "graph.py", "model.py", "ricci.py", "datasets.py", "importer.py", "session.py"];
+const FILES = ["__init__.py", "graph.py", "ricci.py", "datasets.py", "importer.py", "session.py"];
 const LIMITS = { methods: ["ollivier", "forman"], max_nodes: 600, datasets: ["karate", "sbm", "lfr"] };
 
 let py = null;
@@ -37,7 +37,7 @@ from interactive_graph import datasets, importer
 from interactive_graph.session import Session
 
 LIMITS = json.loads(LIMITS_JSON)
-session = Session(None, None, LIMITS)
+session = Session(None, LIMITS)
 
 def handle(text):
     reply = session.handle(json.loads(text))

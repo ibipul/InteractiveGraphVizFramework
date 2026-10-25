@@ -91,7 +91,7 @@ def test_reset_lengths():
 
 
 def test_demo_limits():
-    s = Session(None, None, {"methods": ["forman"], "max_nodes": 50, "datasets": ["karate", "sbm"]})
+    s = Session(None, {"methods": ["forman"], "max_nodes": 50, "datasets": ["karate", "sbm"]})
     s.handle({"op": "load_dataset", "name": "karate"})
     with pytest.raises(GraphError):
         s.handle({"op": "flow_settings", "settings": {"method": "ollivier"}})

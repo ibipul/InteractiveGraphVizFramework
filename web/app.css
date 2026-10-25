@@ -15,6 +15,7 @@
   --canvas: #ffffff;
   --grid: #eef0f3;
   --note: #fff7e0;
+  --faded: #d3d8df;
   color-scheme: light;
 }
 
@@ -30,6 +31,7 @@
     --canvas: #161a21;
     --grid: #1f252e;
     --note: #2b2615;
+    --faded: #3a414c;
     color-scheme: dark;
   }
 }
@@ -204,7 +206,29 @@ kbd {
   padding: 0 4px;
 }
 
+/* ---------------------------------------------------------------- found vs truth */
+
+.compare { margin-top: 12px; }
+table.cmp { border-collapse: separate; border-spacing: 2px; font-size: 11px; font-variant-numeric: tabular-nums; width: 100%; table-layout: auto; }
+table.cmp th { font-weight: 500; color: var(--muted); padding: 0; }
+table.cmp th.corner { font-size: 10px; text-align: left; white-space: nowrap; }
+table.cmp th .swatch { display: inline-block; vertical-align: middle; }
+table.cmp th.rowh { text-align: left; white-space: nowrap; padding-right: 2px; }
+table.cmp th.rowh .swatch { margin-right: 3px; }
+table.cmp td { text-align: center; min-width: 16px; height: 18px; border-radius: 3px; background: var(--bg); cursor: default; }
+table.cmp td[title] { cursor: pointer; }
+table.cmp td.main, table.cmp th.main {
+  background: none; text-align: left; color: var(--muted); padding-left: 4px;
+  max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 /* ---------------------------------------------------------------- inspector */
+
+.focus { margin: 4px 0 8px; }
+.focus-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 3px 0; }
+.focus-row .grow { flex: 1; }
+.ring { width: 12px; height: 12px; border-radius: 50%; border: 1.6px solid var(--text); flex-shrink: 0; }
+.ring.dashed { border-style: dashed; }
 
 .inspector .title { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
 .inspector .facts { font-size: 13px; color: var(--muted); margin: 0 0 6px; }

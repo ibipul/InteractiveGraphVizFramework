@@ -121,11 +121,13 @@
         <p id="louvain-result" class="muted small"></p>
         <div class="row-label">Colour nodes by</div>
         <div class="seg wide" role="group" aria-label="Node colour">
-          <button data-color="community" class="on">Found</button>
-          <button data-color="truth">Ground truth</button>
-          <button data-color="group">Group</button>
+          <button data-color="community" class="on" title="Colour by the communities the flow found">Found</button>
+          <button data-color="truth" title="Colour by the ground-truth class">Truth</button>
+          <button data-color="mismatch" title="Highlight nodes whose true class differs from the main class of their found community">Mismatches</button>
+          <button data-color="group" title="Colour by the editor group (nval)">Group</button>
         </div>
         <div id="comm-list" class="comm-list"></div>
+        <div id="compare" class="compare" hidden></div>
       </details>
 
       <details open>
@@ -142,14 +144,6 @@
       </details>
 
 
-      <details id="model-section">
-        <summary>Custom model step</summary>
-        <p class="muted small">Runs the Python function set with <code>MODEL=module:function</code> (see the README).</p>
-        <div class="row">
-          <button id="model-step">Run model step</button>
-          <label class="toggle"><input id="auto-step" type="checkbox"> After every edit</label>
-        </div>
-      </details>
     </aside>
   </main>
 

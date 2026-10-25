@@ -2,7 +2,6 @@
 # One-command launcher: sets up Python, installs dependencies, starts the graph editor.
 # Usage: ./run.sh                 (opens http://localhost:8070, or the next free port)
 #        PORT=9000 ./run.sh       (use exactly this port)
-#        MODEL=mymodule:my_step ./run.sh       (use your own model step)
 #        GRAPH_FILE=graphs/mine.json ./run.sh  (save the graph somewhere else)
 set -uo pipefail
 cd "$(dirname "$0")"

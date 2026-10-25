@@ -109,3 +109,13 @@ def test_modularity_matches_networkx():
     g = nx.karate_club_graph()
     parts = [set(np.flatnonzero(labels == c).tolist()) for c in range(labels.max() + 1)]
     assert ricci.modularity(arrays, labels) == pytest.approx(nx.community.modularity(g, parts, weight=None))
+
+
+def test_compare_to_truth():
+    labels = np.array([0, 0, 0, 1, 1, 2, 2])
+    truth = np.array([1, 1, 0, 0, 0, 0, 1])
+    c = ricci.compare_to_truth(labels, truth, 2)
+    assert c["table"] == [[1, 2], [2, 0], [1, 1]]
+    assert c["main"][:2] == [1, 0]
+    assert c["colour"][0] == 1 and c["colour"][1] == 0 and c["colour"][2] == 2  # unmatched gets a new colour
+    assert c["mismatches"] == 2 and c["purity"] == pytest.approx(5 / 7)
