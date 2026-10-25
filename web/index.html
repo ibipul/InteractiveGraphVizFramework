@@ -15,6 +15,7 @@
       <div class="brand-links">
         <button id="help-toggle" class="help-link" aria-expanded="false" aria-controls="help">How to use ▾</button>
         <button id="view-toggle" class="help-link" aria-expanded="false" aria-controls="view-pop">View ▾</button>
+        <button id="about-toggle" class="help-link" aria-expanded="false" aria-controls="about-pop" hidden>About this graph ▾</button>
       </div>
     </div>
     <span id="status" class="status" title="Connection status">Connecting…</span>
@@ -44,6 +45,10 @@
       <div id="legend" class="legend" hidden></div>
       <div id="busy" class="busy" hidden></div>
       <div id="toast" class="toast" role="status" hidden></div>
+      <div id="about-pop" class="help-pop" role="dialog" aria-label="About this graph" hidden>
+        <div class="help-head"><b id="about-title">About this graph</b><button id="about-close" class="small" aria-label="Close">×</button></div>
+        <div id="about-body" class="about"></div>
+      </div>
       <div id="view-pop" class="help-pop view-pop" role="dialog" aria-label="View" hidden>
         <div class="help-head"><b>View</b><button id="view-close" class="small" aria-label="Close">×</button></div>
         <label class="toggle"><input id="v-curv" type="checkbox" checked> Colour links by curvature</label>

@@ -192,29 +192,90 @@ def _num(name: str, label: str, default: float, lo: float, hi: float, step: floa
     return {"name": name, "label": label, "default": default, "min": lo, "max": hi, "step": step}
 
 
+# Text for the "About this graph" card: what the network is, what the ground
+# truth means, what Ricci flow should do on it, and a reference result
+# (default settings, measured for the README's "What to expect" table).
 DATASETS: dict[str, dict[str, Any]] = {
-    "karate": {"title": "Karate club", "size": "34 nodes, 78 edges", "load": karate,
-               "about": "Zachary's karate club; truth is which club each member joined after the split."},
-    "polbooks": {"title": "Political books", "size": "105 nodes, 441 edges", "load": polbooks,
-                 "about": "Books on US politics bought together on Amazon; truth is the political leaning (Newman)."},
-    "football": {"title": "College football", "size": "115 nodes, 613 edges", "load": football,
-                 "about": "US college football games in 2000; truth is the conference (Girvan and Newman)."},
-    "email_eu": {"title": "email-Eu-core", "size": "1,005 nodes, 16,064 edges", "load": email_eu,
-                 "about": "Emails in a European research institution (SNAP); truth is one of 42 departments."},
-    "cora": {"title": "Cora citations", "size": "2,708 nodes, 5,278 edges", "load": cora,
-             "about": "Citations between machine-learning papers; truth is one of 7 topics, which follows the links only loosely."},
-    "sbm": {"title": "Stochastic block model", "size": "synthetic", "load": sbm,
-            "about": "Planted blocks: each pair of nodes links with p_in inside a block and p_out across.",
-            "params": [_num("blocks", "Blocks", 5, 2, 50), _num("block_size", "Block size", 40, 3, 1000),
-                       _num("p_in", "p in", 0.3, 0, 1, 0.01), _num("p_out", "p out", 0.02, 0, 1, 0.005),
-                       _num("seed", "Seed", 1, 0, 10**6)]},
-    "lfr": {"title": "LFR benchmark", "size": "synthetic", "load": lfr,
-            "about": "Lancichinetti-Fortunato-Radicchi graph: power-law degrees and community sizes; "
-                     "μ is the share of each node's links that leave its community.",
-            "params": [_num("n", "Nodes", 500, 50, 2000), _num("mu", "Mixing μ", 0.2, 0, 0.8, 0.05),
-                       _num("average_degree", "Average degree", 10, 2, 50),
-                       _num("min_community", "Min community", 20, 5, 500),
-                       _num("seed", "Seed", 1, 0, 10**6)]},
+    "karate": {
+        "title": "Karate club", "size": "34 nodes, 78 edges", "load": karate,
+        "about": "Zachary's karate club; truth is which club each member joined after the split.",
+        "nodes": "34 members of a university karate club, observed by Wayne Zachary (1977).",
+        "links": "78 pairs of members who interacted outside the club.",
+        "truth": "A dispute between the instructor (Mr. Hi) and the club officer split the club in two; "
+                 "each member's side after the split.",
+        "expect": "The two factions are joined by a few members with friends on both sides. Links through "
+                  "them are negatively curved, so the flow stretches them. The flow often splits each faction "
+                  "further, so expect more than two communities.",
+        "reference": "Ollivier, 20 iterations: 4 communities, NMI 0.49.",
+        "source": "https://networkx.org/documentation/stable/reference/generated/networkx.generators.social.karate_club_graph.html"},
+    "polbooks": {
+        "title": "Political books", "size": "105 nodes, 441 edges", "load": polbooks,
+        "about": "Books on US politics bought together on Amazon; truth is the political leaning (Newman).",
+        "nodes": "105 books about US politics sold on Amazon around the 2004 election (compiled by Valdis Krebs).",
+        "links": "441 pairs of books often bought by the same customers.",
+        "truth": "Liberal, neutral or conservative, as labelled by Mark Newman.",
+        "expect": "Liberal and conservative books form two tightly knit groups, so links inside them are "
+                  "positively curved and shrink. The few neutral books sit between the groups and are hard to place.",
+        "reference": "Ollivier, 20 iterations: 4 communities, NMI 0.55.",
+        "source": "https://public.websites.umich.edu/~mejn/netdata/"},
+    "football": {
+        "title": "College football", "size": "115 nodes, 613 edges", "load": football,
+        "about": "US college football games in 2000; truth is the conference (Girvan and Newman).",
+        "nodes": "115 US Division I-A college football teams.",
+        "links": "613 games played in the 2000 regular season (Girvan and Newman, 2002).",
+        "truth": "12 groups: 11 conferences plus the independent teams.",
+        "expect": "Teams play most of their games inside their conference, so those links are positively "
+                  "curved and shrink, while games between conferences stretch. The flow should recover most "
+                  "conferences. Independent teams play across conferences, so they end up scattered.",
+        "reference": "Ollivier, 20 iterations: 10 communities, NMI 0.89 (Louvain: 0.89).",
+        "source": "https://public.websites.umich.edu/~mejn/netdata/"},
+    "email_eu": {
+        "title": "email-Eu-core", "size": "1,005 nodes, 16,064 edges", "load": email_eu,
+        "about": "Emails in a European research institution (SNAP); truth is one of 42 departments.",
+        "nodes": "1,005 members of a large European research institution.",
+        "links": "16,064 pairs who exchanged at least one email (directions merged).",
+        "truth": "The department each person belongs to (42 departments).",
+        "expect": "People email across departments a lot, so departments are not cleanly separated. Expect "
+                  "the automatic cut to leave many small pieces; try the cut slider or steering.",
+        "reference": "Ollivier, 10 iterations: 103 communities, NMI 0.38 (Louvain: 0.57).",
+        "source": "https://snap.stanford.edu/data/email-Eu-core.html"},
+    "cora": {
+        "title": "Cora citations", "size": "2,708 nodes, 5,278 edges", "load": cora,
+        "about": "Citations between machine-learning papers; truth is one of 7 topics, which follows the links only loosely.",
+        "nodes": "2,708 machine-learning papers.",
+        "links": "5,278 citations between them (directions merged).",
+        "truth": "The paper's topic, one of 7 (such as neural networks or reinforcement learning).",
+        "expect": "Topics follow citations only loosely and the graph is sparse, so the flow breaks it into "
+                  "many small pieces. A hard case for any method.",
+        "reference": "Forman, 20 iterations: 630 communities, NMI 0.39 (Louvain: 0.44).",
+        "source": "https://github.com/tkipf/pygcn"},
+    "sbm": {
+        "title": "Stochastic block model", "size": "synthetic", "load": sbm,
+        "about": "Planted blocks: each pair of nodes links with p_in inside a block and p_out across.",
+        "nodes": "Nodes split into equal blocks.",
+        "links": "Each pair of nodes is linked at random: with probability p_in inside a block, p_out across blocks.",
+        "truth": "The planted block of each node.",
+        "expect": "When p_in is well above p_out, links between blocks are negatively curved and stretch, "
+                  "and the flow recovers the blocks. Raise p_out towards p_in to make it harder.",
+        "reference": "Default settings (5 blocks of 40, p_in 0.3, p_out 0.02): Ollivier NMI 1.00, Forman NMI 0.73.",
+        "params": [_num("blocks", "Blocks", 5, 2, 50), _num("block_size", "Block size", 40, 3, 1000),
+                   _num("p_in", "p in", 0.3, 0, 1, 0.01), _num("p_out", "p out", 0.02, 0, 1, 0.005),
+                   _num("seed", "Seed", 1, 0, 10**6)]},
+    "lfr": {
+        "title": "LFR benchmark", "size": "synthetic", "load": lfr,
+        "about": "Lancichinetti-Fortunato-Radicchi graph: power-law degrees and community sizes; "
+                 "μ is the share of each node's links that leave its community.",
+        "nodes": "Nodes with power-law degrees, grouped into communities of power-law sizes "
+                 "(Lancichinetti, Fortunato and Radicchi, 2008).",
+        "links": "Each node has a share μ of its links going outside its community.",
+        "truth": "The planted community of each node.",
+        "expect": "With small μ (0.1–0.3) communities are clear and the flow recovers them; as μ approaches "
+                  "0.5, more links cross communities and recovery gets harder.",
+        "reference": "500 nodes, μ = 0.2, Ollivier, 20 iterations: 12 communities, NMI 0.97 (Louvain: 0.98).",
+        "params": [_num("n", "Nodes", 500, 50, 2000), _num("mu", "Mixing μ", 0.2, 0, 0.8, 0.05),
+                   _num("average_degree", "Average degree", 10, 2, 50),
+                   _num("min_community", "Min community", 20, 5, 500),
+                   _num("seed", "Seed", 1, 0, 10**6)]},
 }
 
 

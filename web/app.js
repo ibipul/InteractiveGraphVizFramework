@@ -796,7 +796,12 @@ $("view-3d").onclick = () => setView("3d");
 function onMessage(msg) {
   if (msg.type === "error") return toast(msg.message, 6000);
   if (msg.type === "added") { pendingSelect = { nodes: [msg.node.id] }; return; }
-  if (msg.type === "loaded") { fitNext = true; clearSelectionSoon(); return toast(msg.message); }
+  if (msg.type === "loaded") {
+    fitNext = true;
+    clearSelectionSoon();
+    pulse($("about-toggle"));  // point at the explanation of the new graph
+    return toast(msg.message);
+  }
   if (msg.type === "progress") return showBusy(msg.message);
   if (msg.type === "ready") return showBusy(null);
   if (msg.type === "catalog") { catalog = msg.catalog; return renderCatalog(); }
@@ -972,6 +977,7 @@ function renderPanels() {
   if (colorBy === "truth" && !truthN) colorBy = "community";
   renderCommunityList();
   renderComparison();
+  renderAbout();
   renderLegend();
 
 
@@ -1007,6 +1013,55 @@ function renderCommunityList() {
     list.append(chip);
   }
   if (groups.size > sorted.length) list.append(el("span", "muted small", `+${groups.size - sorted.length} more`));
+}
+
+// "About this graph": what the network is, what the ground truth means, what
+// Ricci flow does and should do here, and where the current run stands.
+function renderAbout() {
+  const g = snap.graph, meta = g.meta || {}, a = snap.analysis || {};
+  $("about-toggle").hidden = !g.nodes.length;
+  if (!g.nodes.length) return;
+  const info = catalog.find((d) => d.id === meta.dataset);
+  const truthN = meta.truth_names?.length;
+  const hasCapacity = g.links.some((l) => l.capacity != null);
+  const method = a.settings?.method;
+  $("about-title").textContent = meta.name || "This graph";
+
+  const parts = [];
+  const section = (title, html) => parts.push(`<h3>${title}</h3><p>${html}</p>`);
+  if (info) {
+    section("The network", `${escape(info.nodes)} ${escape(info.links)}` +
+      (meta.description ? `<br><span class="muted">${escape(meta.description)}.</span>` : ""));
+  } else {
+    section("The network", `${g.nodes.length.toLocaleString()} nodes and ${g.links.length.toLocaleString()} links` +
+      (meta.source ? ` from ${escape(meta.source)}` : "") + "." +
+      (hasCapacity ? " Links carry capacities, so the starting length of each link is 1 / capacity: strongly connected pairs start close." : ""));
+  }
+  section("Ground truth", info?.truth ? escape(info.truth)
+    : truthN ? `${truthN} classes (${escape(meta.truth_label || "from the file")}).`
+    : "None, so communities are judged by modularity only.");
+  section("What Ricci flow does",
+    "Each link gets a curvature: positive when its two ends share many neighbours (inside a group), negative when it bridges groups. " +
+    "Every iteration shrinks positively curved links and stretches negatively curved ones, so groups drift apart and stretched links turn dotted. " +
+    "Cutting the longest links then splits the network into communities." +
+    (method === "forman" ? " Curvature here is <b>Forman-Ricci</b>: a quick formula from degrees and triangles, rougher than Ollivier."
+      : method === "ollivier" ? " Curvature here is <b>Ollivier-Ricci</b>: it compares the two ends' neighbourhoods by optimal transport." : ""));
+  if (info?.expect) section("What to expect here", escape(info.expect));
+  if (info?.reference) section("Reference result", escape(info.reference));
+  const c = a.communities;
+  const run = !a.iteration ? "Not run yet: press <b>Run</b> under Ricci flow."
+    : `Iteration ${a.iteration}${a.running ? " (running)" : ""}: ${c?.count ?? "–"} communities, modularity ${fmt(c?.modularity)}` +
+      (c?.nmi != null ? `, NMI ${fmt(c.nmi)}, ARI ${fmt(c.ari)}` : "") + ".";
+  section("This run", run);
+  if (info?.source) parts.push(`<p class="muted small"><a href="${escape(info.source)}" target="_blank" rel="noopener">Source</a></p>`);
+  $("about-body").innerHTML = parts.join("");
+}
+
+function pulse(element) {
+  element.classList.remove("pulse");
+  void element.offsetWidth;  // restart the animation
+  element.classList.add("pulse");
+  setTimeout(() => element.classList.remove("pulse"), 4000);
 }
 
 // Found communities (rows) against ground-truth classes (columns). Cells are
@@ -1303,7 +1358,11 @@ $("save-server").onclick = async () => {
 };
 
 // Cards that open from the links under the title; one at a time.
-const CARDS = { help: ["help", "help-toggle", "How to use"], view: ["view-pop", "view-toggle", "View"] };
+const CARDS = {
+  help: ["help", "help-toggle", "How to use"],
+  view: ["view-pop", "view-toggle", "View"],
+  about: ["about-pop", "about-toggle", "About this graph"],
+};
 
 function setCard(name, open) {
   for (const [other, [card, link, label]] of Object.entries(CARDS)) {
@@ -1326,6 +1385,7 @@ for (const name of Object.keys(CARDS)) {
 }
 $("help-close").onclick = () => setCard("help", false);
 $("view-close").onclick = () => setCard("view", false);
+$("about-close").onclick = () => setCard("about", false);
 
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });

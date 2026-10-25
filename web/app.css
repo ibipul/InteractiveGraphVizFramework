@@ -80,6 +80,11 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15); padding: 12px 14px;
 }
 .view-pop { width: min(300px, calc(100% - 24px)); }
+.about h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 10px 0 2px; font-weight: 600; }
+.about h3:first-child { margin-top: 0; }
+.about p { margin: 0; font-size: 13px; }
+.help-link.pulse { animation: pulse 1s ease-in-out 3; border-radius: 4px; }
+@keyframes pulse { 50% { background: color-mix(in srgb, var(--accent) 22%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); } }
 .help-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 
 .bar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
