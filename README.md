@@ -358,6 +358,6 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 
 ## License
 
-MIT License; see [LICENSE](LICENSE). Copyright (c) 2018-2026 Bipul Islam.
+MIT License; see [LICENSE](LICENSE).
 
 The original 2018 editor started from Ross Kirsling's D3 directed-graph editor example (MIT-licensed); none of that code remains after the rewrite.
