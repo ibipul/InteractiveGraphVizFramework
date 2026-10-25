@@ -15,7 +15,7 @@ A browser workbench for graphs: load a network (a classic dataset, a synthetic b
 ![D3.js](https://img.shields.io/badge/D3.js-7.9.0-F9A03C?logo=d3dotjs&logoColor=white)
 ![3d-force-graph](https://img.shields.io/badge/3d--force--graph-1.80.0-000000?logo=threedotjs&logoColor=white)
 ![Pyodide](https://img.shields.io/badge/Pyodide-314.0.7-FFD43B)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ![College football after 12 Ollivier-Ricci flow iterations](docs/screenshot.png)
 <sub>College football after 12 Ollivier-Ricci flow iterations: 10 communities found (NMI 0.89 against the real conferences). Links inside a community stay solid; links the flow stretched turn dotted; purple links were pinned by hand.</sub>
@@ -352,4 +352,6 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 
 ## License
 
-MIT; see [Front-end-License.txt](Front-end-License.txt). The original 2018 editor started from Ross Kirsling's D3 directed-graph editor example, which is MIT-licensed.
+MIT License; see [LICENSE](LICENSE). Copyright (c) 2018-2026 Bipul Islam.
+
+The original 2018 editor started from Ross Kirsling's D3 directed-graph editor example (MIT-licensed); none of that code remains after the rewrite.
