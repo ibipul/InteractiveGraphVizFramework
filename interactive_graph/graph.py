@@ -355,6 +355,11 @@ class GraphState:
             if op.get("value", True):
                 link["pinned"] = True
 
+    def _op_unpin_all(self, op: dict[str, Any]) -> None:
+        """Unpin every link; their lengths stay as they are."""
+        for link in self.graph["links"]:
+            link.pop("pinned", None)
+
     def _op_step(self, op: dict[str, Any]) -> None:
         self._run_step()
 

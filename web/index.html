@@ -36,6 +36,26 @@
     </div>
 
     <aside class="panel">
+      <details id="help" open>
+        <summary>How to use</summary>
+        <dl class="help">
+          <dt>Click</dt><dd>select a node or link</dd>
+          <dt>Shift + click</dt><dd>add to or remove from the selection</dd>
+          <dt>Shift + drag</dt><dd>select everything in a box</dd>
+          <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
+          <dt>Double-click a node</dt><dd>unpin its position</dd>
+          <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
+          <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
+          <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
+          <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>
+          <dt><kbd>P</kbd></dt><dd>pin or unpin the selection's links</dd>
+          <dt><kbd>Shift</kbd>+<kbd>P</kbd></dt><dd>unpin all links and nodes</dd>
+          <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
+          <dt><kbd>Delete</kbd></dt><dd>remove the selection</dd>
+          <dt><kbd>Esc</kbd> / <kbd>F</kbd></dt><dd>clear selection / fit view</dd>
+        </dl>
+        <p class="muted small">Links: colour is curvature (red negative, blue positive), dots mean the flow has stretched the link, purple means pinned. Node colour is the found community, the ground truth, or the editor group.</p>
+      </details>
       <details open>
         <summary>Graph</summary>
         <div class="field-row">
@@ -69,13 +89,14 @@
         <div class="row">
           <button id="run" class="primary" title="Run or stop the flow (Space)">Run</button>
           <button id="once" title="One iteration (S)">Step once</button>
+          <button id="unpin-all" title="Release every pinned link and every node you dragged into place; lengths stay as they are (Shift+P)">Unpin all</button>
           <span class="grow"></span>
           <select id="reset-mode" aria-label="Starting lengths" title="Starting lengths">
             <option value="inverse">1 / capacity</option>
             <option value="capacity">capacity</option>
             <option value="uniform">all 1</option>
           </select>
-          <button id="reset" title="Set every length back to the starting value and unpin all links">Reset</button>
+          <button id="reset" title="Set every length back to the starting value and unpin all links and nodes">Reset</button>
         </div>
         <p id="flow-status" class="info"></p>
         <canvas id="chart" class="chart" height="110" hidden></canvas>
@@ -116,25 +137,6 @@
         <label class="toggle"><input id="v-labels" type="checkbox"> Show labels</label>
       </details>
 
-      <details>
-        <summary>How to use</summary>
-        <dl class="help">
-          <dt>Click</dt><dd>select a node or link</dd>
-          <dt>Shift + click</dt><dd>add to or remove from the selection</dd>
-          <dt>Shift + drag</dt><dd>select everything in a box</dd>
-          <dt>Drag a node</dt><dd>move it (and the selection); it stays pinned</dd>
-          <dt>Double-click a node</dt><dd>unpin its position</dd>
-          <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
-          <dt><kbd>N</kbd> Add mode</dt><dd>click to add a node, drag node → node to link</dd>
-          <dt><kbd>Space</kbd> / <kbd>S</kbd></dt><dd>run or stop the flow / one iteration</dd>
-          <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>pull the selection together / push it apart</dd>
-          <dt><kbd>P</kbd></dt><dd>pin or unpin the selection's links</dd>
-          <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
-          <dt><kbd>Delete</kbd></dt><dd>remove the selection</dd>
-          <dt><kbd>Esc</kbd> / <kbd>F</kbd></dt><dd>clear selection / fit view</dd>
-        </dl>
-        <p class="muted small">Links: colour is curvature (red negative, blue positive), dots mean the flow has stretched the link, purple means pinned. Node colour is the found community, the ground truth, or the editor group.</p>
-      </details>
 
       <details id="model-section">
         <summary>Custom model step</summary>

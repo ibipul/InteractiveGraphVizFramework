@@ -132,3 +132,17 @@ def test_lfr_and_import_round_trip(tmp_path):
     graph, summary = importer.read("k.graphml", path.read_bytes())
     assert len(graph["nodes"]) == 34 and graph["links"][0]["capacity"] == 2.0
     assert graph["meta"]["truth_names"] == ["Mr. Hi", "Officer"]
+
+
+def test_unpin_all_keeps_lengths():
+    s = Session(datasets.load("karate"))
+    links = s.state.graph["links"]
+    s.handle({"op": "scale", "links": [[l["source"], l["target"]] for l in links[:5]], "factor": 2})
+    lengths = [l["length"] for l in s.state.graph["links"]]
+    s.handle({"op": "flow_start", "settings": {"iterations": 3}})
+    s.handle({"op": "unpin_all"})  # allowed while the flow runs
+    s.handle({"op": "flow_stop"})
+    assert not any(l.get("pinned") for l in s.state.graph["links"])
+    assert [l["length"] for l in s.state.graph["links"]] == lengths
+    s.handle({"op": "undo"})
+    assert sum(1 for l in s.state.graph["links"] if l.get("pinned")) == 5

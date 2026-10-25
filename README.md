@@ -67,10 +67,10 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 ## Using the page
 
-The side panel, top to bottom:
+The side panel, top to bottom (the first section, **How to use**, lists the mouse and keyboard controls; collapse it once you know them):
 
 1. **Graph.** Pick a dataset (synthetic ones take parameters), press **Load**. **Import file…** reads your own network. **Download results** saves the graph with lengths, curvature and communities, plus node and edge tables. **Save on server** writes the same into `data/results/<time>-<name>/`.
-2. **Ricci flow.** Choose the curvature. `α` is the share of each node's mass that stays put (Ollivier only), `Step` how far each iteration moves the lengths (default 1 for Ollivier, 0.3 for Forman), `Iterations` how many to run (0 runs until you press **Stop**). **Run** / **Stop** (Space), **Step once** (S). **Reset** sets every length back to its starting value (1 / capacity, capacity, or all 1) and unpins all links. The chart shows modularity, NMI and ARI by iteration.
+2. **Ricci flow.** Choose the curvature. `α` is the share of each node's mass that stays put (Ollivier only), `Step` how far each iteration moves the lengths (default 1 for Ollivier, 0.3 for Forman), `Iterations` how many to run (0 runs until you press **Stop**). **Run** / **Stop** (Space), **Step once** (S). **Unpin all** (Shift+P) releases every pinned link and every node you dragged into place, keeping the current lengths. **Reset** sets every length back to its starting value (1 / capacity, capacity, or all 1) and unpins all links and nodes. The chart shows modularity, NMI and ARI by iteration.
 3. **Communities.** The count, modularity and, with ground truth, NMI and ARI. Untick **Cut where modularity is highest** to choose the cut length with the slider. **Compare with Louvain** scores Louvain's communities the same way. Colour nodes by the **Found** communities, the **Ground truth**, or the editor **Group**. Click a community chip to select all of its nodes.
 4. **Selection and steering.** Details of what you selected and the steering buttons (next section).
 5. **View.** Curvature colours, dotted long links, whether the layout follows the Ricci lengths, labels.
@@ -88,6 +88,7 @@ On the canvas:
 | **Add** mode (<kbd>N</kbd>) | Click to add a node, drag from node to node to add a link; **Select** mode is <kbd>V</kbd> |
 | <kbd>[</kbd> / <kbd>]</kbd> | Pull the selection together / push it apart |
 | <kbd>P</kbd> | Pin or unpin the selection's links |
+| <kbd>Shift</kbd>+<kbd>P</kbd> | Unpin all links and nodes |
 | <kbd>A</kbd> / <kbd>D</kbd> | Increase / decrease load |
 | <kbd>Delete</kbd> | Remove the selection |
 | <kbd>F</kbd>, <kbd>Esc</kbd> | Fit the view, clear the selection |
@@ -104,6 +105,7 @@ Every steering action is an ordinary edit, so it works while the flow runs, from
 | **Pull together** <kbd>[</kbd> | Halves the length of the links inside the selection and pins them |
 | **Push apart** <kbd>]</kbd> | Doubles the length of the links leaving the selection and pins them (for a selection of links only: those links) |
 | **Pin links** <kbd>P</kbd> | The flow stops changing those links |
+| **Unpin all** <kbd>Shift</kbd>+<kbd>P</kbd> | Releases every pinned link (and every dragged node); the flow takes over again from the current lengths |
 | Set a link's **Length** | Sets it and pins it |
 | Set a link's **Capacity** | Used by **Reset** with 1 / capacity or capacity |
 | Delete or add nodes and links | The next iteration runs on the new graph |

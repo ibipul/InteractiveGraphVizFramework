@@ -346,6 +346,7 @@ const drag = d3.drag()
     }
     sim.alphaTarget(0);  // moved nodes stay pinned in place; double-click to release
     dragMoved = null;
+    updateUnpinButton();
   });
 
 d3.select(canvas).call(drag).call(zoom).on("dblclick.zoom", null);
@@ -372,7 +373,7 @@ canvas.addEventListener("click", (e) => {
 
 canvas.addEventListener("dblclick", (e) => {
   const d = hitNode(e.offsetX, e.offsetY);
-  if (d) { d.fx = d.fy = null; sim.alpha(0.2).restart(); }
+  if (d) { d.fx = d.fy = null; sim.alpha(0.2).restart(); updateUnpinButton(); }
 });
 
 function setMode(m) {
@@ -400,7 +401,8 @@ window.addEventListener("keydown", (e) => {
     case "Escape": clearSelection(); break;
     case "[": if (hasSel) steer("pull"); break;
     case "]": if (hasSel) steer("push"); break;
-    case "p": case "P": if (hasSel) steer("pin"); break;
+    case "P": if (e.shiftKey) { unpinAll(); break; } if (hasSel) steer("pin"); break;
+    case "p": if (hasSel) steer("pin"); break;
     case "a": case "A": case "+": case "=": adjustSelection(1); break;
     case "d": case "D": case "-": adjustSelection(-1); break;
     case "Delete": case "Backspace": if (hasSel) deleteSelection(); break;
@@ -619,6 +621,11 @@ function applyState(s) {
     }
     sim.nodes(nodes);
     linkForce.links(links);
+    const ds = g.meta?.dataset;
+    if (ds && ds !== $("dataset").value && catalog.some((d) => d.id === ds)) {
+      $("dataset").value = ds;  // show which dataset is loaded
+      renderParams();
+    }
     updateScales();
     configureForces();
     if (fitNext) {
@@ -715,6 +722,7 @@ function renderPanels() {
   $("run").classList.toggle("danger", running);
   $("once").disabled = running;
   $("reset").disabled = running;
+  updateUnpinButton();
   for (const id of ["load-dataset", "import"]) $(id).disabled = false;
 
   const last = a.history?.[a.history.length - 1];
@@ -843,7 +851,9 @@ function renderCatalog() {
     o.value = d.id;
     s.append(o);
   }
-  if (current && catalog.some((d) => d.id === current)) s.value = current;
+  const loaded = snap?.graph?.meta?.dataset;
+  if (loaded && catalog.some((d) => d.id === loaded)) s.value = loaded;
+  else if (current && catalog.some((d) => d.id === current)) s.value = current;
   renderParams();
 }
 
@@ -883,7 +893,35 @@ function flowOnce() {
 
 $("run").onclick = toggleRun;
 $("once").onclick = flowOnce;
-$("reset").onclick = () => send({ op: "reset_lengths", mode: $("reset-mode").value });
+$("reset").onclick = () => { releaseNodes(); send({ op: "reset_lengths", mode: $("reset-mode").value }); };
+$("unpin-all").onclick = unpinAll;
+
+// Nodes dragged into place are pinned in this tab's layout only (fx/fy);
+// pinned links live in the shared graph.
+function releaseNodes() {
+  let released = 0;
+  for (const d of nodes) {
+    if (d.fx != null || d.fy != null) { d.fx = d.fy = null; released++; }
+  }
+  if (released) sim.alpha(0.3).restart();
+  return released;
+}
+
+function unpinAll() {
+  const nodesReleased = releaseNodes();
+  const linksPinned = links.filter((l) => l.pinned).length;
+  if (linksPinned) send({ op: "unpin_all" });
+  if (!nodesReleased && !linksPinned) return toast("Nothing is pinned");
+  const count = (n, word) => n && `${n} ${word}${n === 1 ? "" : "s"}`;
+  toast(`Unpinned ${[count(linksPinned, "link"), count(nodesReleased, "node")].filter(Boolean).join(" and ")}`);
+  updateUnpinButton();
+}
+
+function updateUnpinButton() {
+  const count = links.filter((l) => l.pinned).length + nodes.filter((d) => d.fx != null).length;
+  $("unpin-all").disabled = !count;
+  $("unpin-all").textContent = count ? `Unpin all (${count})` : "Unpin all";
+}
 for (const b of document.querySelectorAll("[data-method]")) {
   b.onclick = () => send({ op: "flow_settings", settings: { method: b.dataset.method } });
 }
@@ -939,6 +977,14 @@ $("save-server").onclick = async () => {
   const body = await r.json();
   toast(body.message || body.error);
 };
+
+// Remember whether this viewer collapsed the help.
+try {
+  if (localStorage.getItem("help-collapsed") === "1") $("help").open = false;
+} catch { /* no storage: keep it open */ }
+$("help").addEventListener("toggle", () => {
+  try { localStorage.setItem("help-collapsed", $("help").open ? "0" : "1"); } catch { /* ignore */ }
+});
 
 $("undo").onclick = () => send({ op: "undo" });
 $("redo").onclick = () => send({ op: "redo" });
