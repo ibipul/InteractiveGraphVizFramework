@@ -83,13 +83,22 @@ def emd2(a: np.ndarray, b: np.ndarray, cost: np.ndarray) -> float:
     """Optimal-transport cost of moving distribution a onto b."""
     if ot is not None:
         return float(ot.emd2(a, b, cost))
-    # Transport plan P (len(a) x len(b)): rows sum to a, columns to b.
+    # Transport plan P (len(a) x len(b)): rows sum to a, columns to b. The two
+    # sets of sums must agree exactly, and one column constraint is implied
+    # by the others; with it, rounding error can make the problem infeasible.
+    # Masses on stretched links can be ~1e-8, below HiGHS's feasibility
+    # tolerance, so solve with both scaled up by SCALE and scale the cost back.
+    SCALE = 1e6
     na, nb = cost.shape
+    a = a * SCALE
+    b = b * (a.sum() / b.sum())
     rows = np.kron(np.eye(na), np.ones(nb))
-    cols = np.kron(np.ones(na), np.eye(nb))
-    res = linprog(cost.ravel(), A_eq=np.vstack([rows, cols]), b_eq=np.concatenate([a, b]),
+    cols = np.kron(np.ones(na), np.eye(nb))[:-1]
+    res = linprog(cost.ravel(), A_eq=np.vstack([rows, cols]), b_eq=np.concatenate([a, b[:-1]]),
                   bounds=(0, None), method="highs")
-    return float(res.fun)
+    if res.status != 0:
+        raise RuntimeError(f"optimal-transport solver failed: {res.message}")
+    return float(res.fun) / SCALE
 
 
 @dataclass

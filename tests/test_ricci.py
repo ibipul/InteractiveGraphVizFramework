@@ -119,3 +119,18 @@ def test_compare_to_truth():
     assert c["main"][:2] == [1, 0]
     assert c["colour"][0] == 1 and c["colour"][1] == 0 and c["colour"][2] == 2  # unmatched gets a new colour
     assert c["mismatches"] == 2 and c["purity"] == pytest.approx(5 / 7)
+
+
+def test_linprog_fallback_handles_tiny_masses(monkeypatch):
+    # Stretched links give neighbours masses ~1e-8, below HiGHS's tolerance.
+    ot = pytest.importorskip("ot")
+    rng = np.random.default_rng(1)
+    for _ in range(20):
+        a = np.concatenate([[0.5], rng.random(6) * 0.5 / 6, [1e-8, 7e-8]])
+        b = np.concatenate([[0.5], rng.random(5) * 0.5 / 5, [2e-8]])
+        a, b = a / a.sum(), b / b.sum()
+        cost = rng.random((len(a), len(b))) * 6
+        want = float(ot.emd2(a, b, cost))
+        monkeypatch.setattr(ricci, "ot", None)
+        assert ricci.emd2(a, b, cost) == pytest.approx(want, abs=1e-8)
+        monkeypatch.setattr(ricci, "ot", ot)

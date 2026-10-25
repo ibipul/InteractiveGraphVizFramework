@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import gzip
 import io
+import json
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -17,7 +18,11 @@ import networkx as nx
 
 from .graph import Graph
 
-CACHE = Path(__file__).resolve().parent.parent / "data" / "datasets"
+ROOT = Path(__file__).resolve().parent.parent
+CACHE = ROOT / "data" / "datasets"
+# Copies of small real networks shipped with the app, so the web demo (which
+# can't download from other sites) can load them; see web/datasets/.
+BUNDLED = ROOT / "web" / "datasets"
 USER_AGENT = "Mozilla/5.0 (InteractiveGraphViz dataset loader)"  # Newman's site refuses Python's default
 
 
@@ -88,9 +93,14 @@ def karate(params: dict[str, Any]) -> Graph:
     return to_graph(g, truth, {"name": "Karate club", "truth_label": "club after the split"})
 
 
+# Conference of each value, from football.txt in Newman's football.zip.
+CONFERENCES = ["Atlantic Coast", "Big East", "Big Ten", "Big Twelve", "Conference USA", "Independents",
+               "Mid-American", "Mountain West", "Pacific Ten", "Southeastern", "Sun Belt", "Western Athletic"]
+
+
 def football(params: dict[str, Any]) -> Graph:
     g = _newman_gml("football.zip")
-    truth = {n: d["value"] for n, d in g.nodes(data=True)}
+    truth = {n: CONFERENCES[d["value"]] for n, d in g.nodes(data=True)}
     return to_graph(g, truth, {"name": "College football", "truth_label": "conference"})
 
 
@@ -286,8 +296,12 @@ def catalog() -> list[dict[str, Any]]:
 def load(name: str, params: dict[str, Any] | None = None) -> Graph:
     if name not in DATASETS:
         raise ValueError(f"unknown dataset {name!r}")
-    loader: Callable[[dict[str, Any]], Graph] = DATASETS[name]["load"]
-    graph = loader(params or {})
+    bundled = BUNDLED / f"{name}.json"
+    if bundled.exists():
+        graph = json.loads(bundled.read_text())
+    else:
+        loader: Callable[[dict[str, Any]], Graph] = DATASETS[name]["load"]
+        graph = loader(params or {})
     graph["meta"]["dataset"] = name
     graph["meta"].setdefault("about", DATASETS[name]["about"])
     return graph

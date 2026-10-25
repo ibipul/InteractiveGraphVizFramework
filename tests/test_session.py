@@ -146,3 +146,12 @@ def test_unpin_all_keeps_lengths():
     assert [l["length"] for l in s.state.graph["links"]] == lengths
     s.handle({"op": "undo"})
     assert sum(1 for l in s.state.graph["links"] if l.get("pinned")) == 5
+
+
+def test_football_is_bundled_with_conference_names():
+    g = datasets.load("football")
+    assert len(g["nodes"]) == 115 and len(g["links"]) == 613
+    assert "Big Ten" in g["meta"]["truth_names"] and len(g["meta"]["truth_names"]) == 12
+    s = Session(None, {"methods": ["forman"], "max_nodes": 600, "datasets": ["football"]})
+    s.handle({"op": "load_dataset", "name": "football"})  # the web demo loads it without a download
+    assert s.state.graph["meta"]["name"] == "College football"

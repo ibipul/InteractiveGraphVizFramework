@@ -141,13 +141,13 @@ How an edit meets a running flow: each iteration reads the current lengths, comp
 |---|---|---|---|---|---|
 | Karate club | 34 | 78 | the club each member joined after the split | built into networkx | yes |
 | Political books | 105 | 441 | political leaning (3) | [Newman's network data](https://public.websites.umich.edu/~mejn/netdata/) | – |
-| College football | 115 | 613 | conference (12) | [Newman's network data](https://public.websites.umich.edu/~mejn/netdata/) | – |
+| College football | 115 | 613 | conference (11 conferences plus independents) | [Newman's network data](https://public.websites.umich.edu/~mejn/netdata/) | yes |
 | email-Eu-core | 1,005 | 16,064 | department (42) | [SNAP](https://snap.stanford.edu/data/email-Eu-core.html) | – |
 | Cora | 2,708 | 5,278 | paper topic (7) | [tkipf/pygcn](https://github.com/tkipf/pygcn) copy of the LINQS data | – |
 | Stochastic block model | you choose | | the planted blocks | `networkx.stochastic_block_model` | up to 600 nodes |
 | LFR benchmark | 50 – 2,000 | | the planted communities | `networkx.LFR_benchmark_graph` | up to 600 nodes |
 
-The real networks are downloaded on first use and cached in `data/datasets/`. Link counts are after merging directed or repeated edges and dropping self-loops. Cora's topics follow its links only loosely, so expect low scores there from any method.
+The real networks are downloaded on first use and cached in `data/datasets/`, except college football: a converted copy ships in `web/datasets/football.json` so the web demo, which can't download from other sites, can load it too. Link counts are after merging directed or repeated edges and dropping self-loops. Cora's topics follow its links only loosely, so expect low scores there from any method.
 
 networkx's LFR generator often gives up for a given seed ("could not assign communities"); the loader then tries the next 24 seeds. Above 2,000 nodes it rarely succeeds, so the panel stops there.
 
@@ -218,7 +218,7 @@ In short: Ollivier-Ricci flow recovers planted communities well and matches Louv
 |---|---|---|
 | Where Python runs | in your browser (Pyodide) | the local server |
 | First load | downloads about 35 MB (cached afterwards); about 6 s on a fast connection | – |
-| Graphs | karate club, SBM and LFR up to 600 nodes, imports up to 600 nodes | everything above |
+| Graphs | karate club, college football, SBM and LFR up to 600 nodes, imports up to 600 nodes | everything above |
 | Curvature | both; Ollivier uses scipy's slower solver (about 3.6 s per iteration on a 200-node, 1,540-link SBM, versus 0.13 s natively) | both |
 | Sharing | one visitor, results stay in the browser until downloaded | every open tab shares the same live graph; results saved on disk |
 
@@ -351,6 +351,7 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 
 - Y. Ollivier, "Ricci curvature of Markov chains on metric spaces", *Journal of Functional Analysis* 256 (2009).
 - C.-C. Ni, Y.-Y. Lin, F. Luo, J. Gao, "Community detection on networks with Ricci flow", *Scientific Reports* 9, 9984 (2019).
+- M. Girvan, M. E. J. Newman, "Community structure in social and biological networks", *PNAS* 99, 7821–7826 (2002) (the college football network).
 - R. P. Sreejith, K. Mohanraj, J. Jost, E. Saucan, A. Samal, "Forman curvature for complex networks", *Journal of Statistical Mechanics* (2016).
 - A. Samal, R. P. Sreejith, J. Gu, S. Liu, E. Saucan, J. Jost, "Comparative analysis of two discretizations of Ricci curvature for complex networks", *Scientific Reports* 8, 8650 (2018).
 - A. Lancichinetti, S. Fortunato, F. Radicchi, "Benchmark graphs for testing community detection algorithms", *Physical Review E* 78, 046110 (2008).

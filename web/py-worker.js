@@ -9,7 +9,10 @@
 import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs";
 
 const FILES = ["__init__.py", "graph.py", "ricci.py", "datasets.py", "importer.py", "session.py"];
-const LIMITS = { methods: ["ollivier", "forman"], max_nodes: 600, datasets: ["karate", "sbm", "lfr"] };
+const LIMITS = { methods: ["ollivier", "forman"], max_nodes: 600, datasets: ["karate", "football", "sbm", "lfr"] };
+// Real networks shipped with the page (web/datasets/), since the browser can't
+// download them from their original sites.
+const BUNDLED = ["football"];
 
 let py = null;
 let api = null;
@@ -28,6 +31,11 @@ async function init(base) {
     const r = await fetch(`${base}py/interactive_graph/${f}`);
     if (!r.ok) throw new Error(`could not fetch ${f} (${r.status})`);
     py.FS.writeFile(`/home/pyodide/interactive_graph/${f}`, await r.text());
+  }
+  py.FS.mkdirTree("/home/pyodide/web/datasets");
+  for (const name of BUNDLED) {
+    const r = await fetch(`${base}datasets/${name}.json`);
+    if (r.ok) py.FS.writeFile(`/home/pyodide/web/datasets/${name}.json`, await r.text());
   }
   py.globals.set("LIMITS_JSON", JSON.stringify(LIMITS));
   api = py.runPython(`
