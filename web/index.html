@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Graph Viz</title>
+  <meta name="description" content="Draw a graph in the browser, change node and link loads on the fly, and run a model step on it.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 9L24 12L14 24Z' stroke='%2364748b' stroke-width='2' fill='none'/%3E%3Ccircle cx='8' cy='9' r='5' fill='%234e79a7'/%3E%3Ccircle cx='24' cy='12' r='5' fill='%23f28e2b'/%3E%3Ccircle cx='14' cy='24' r='5' fill='%2359a14f'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>Interactive Graph Viz</h1>
+    <span id="status" class="status" title="Connection status">Connecting…</span>
+    <div class="bar-actions">
+      <button id="undo" title="Undo (Ctrl/⌘+Z)" disabled>Undo</button>
+      <button id="redo" title="Redo (Ctrl/⌘+Shift+Z)" disabled>Redo</button>
+      <span class="sep"></span>
+      <button id="step" class="primary" title="Run the model step (S)">Step</button>
+      <label class="toggle" title="Run the model step after every edit">
+        <input id="auto-step" type="checkbox"> Auto-step
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <div id="canvas" class="canvas" aria-label="Graph canvas">
+      <svg id="graph"></svg>
+      <div id="toast" class="toast" role="status" hidden></div>
+    </div>
+
+    <aside class="panel">
+      <section>
+        <h2>Selection</h2>
+        <div id="inspector" class="inspector">
+          <p class="muted">Click a node or link to see and edit it.</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>Graph</h2>
+        <p id="counts" class="muted">–</p>
+        <div class="row">
+          <button id="download" title="Save the graph as a JSON file">Download JSON</button>
+          <label class="button" title="Open a graph JSON file">
+            Load JSON <input id="load" type="file" accept=".json,application/json" hidden>
+          </label>
+        </div>
+        <div class="row">
+          <button id="example" title="Replace the graph with the example graph">Load example</button>
+          <button id="clear" title="Remove all nodes and links">Clear</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>How to use</h2>
+        <dl class="help">
+          <dt>Click empty space</dt><dd>add a node</dd>
+          <dt>Drag node → node</dt><dd>add a link</dd>
+          <dt>Shift + drag node</dt><dd>move and pin it</dd>
+          <dt>Double-click node</dt><dd>unpin it</dd>
+          <dt>Drag empty space / wheel</dt><dd>pan / zoom</dd>
+          <dt>Click node or link</dt><dd>select it</dd>
+          <dt><kbd>A</kbd> / <kbd>D</kbd></dt><dd>increase / decrease load</dd>
+          <dt><kbd>Delete</kbd></dt><dd>remove selection</dd>
+          <dt><kbd>S</kbd></dt><dd>run the model step</dd>
+          <dt><kbd>Esc</kbd></dt><dd>clear selection</dd>
+        </dl>
+        <p class="muted small">Node size and link width show the total load; colour shows the node's group.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

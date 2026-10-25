@@ -1,35 +1,26 @@
-# Interactive Graph Visualization framework (D3.js)
-This repo will contain all the work associated with creation of interactive graph viz interface. 
-Basic UI code has been lifted from d3.js examples by Ross Kirsling, under MIT License.
-Basic extended functionality:
-- This project provides a small web view port with a dummy initial graph that has node and link weights.
-- User can add new nodes and links to the graph.
-- User can also increase or decrease link and node weights on the fly by pressing keys on keyboard.
-- Once a desired setup is reached, user can take the latest snapshot of the graph and store on the disk (for reloading later)
-- Currently the save and reload is a little shaky, and is done through a flask server.
+# Interactive Graph Viz Framework
 
-## Project
-Here's how the project is proceeding
-- *March 12*, Basic tests to understand bits and pieces
-- *March 13*, Figured out asynchronous data read for JS
-- *March 14*, Data transfer from UI to backend/ progress project is flasktest
-- *March 15*, 
-	-- Fixed json structure (close to networkx)
-	-- Nodes get colored by group id
-	-- Cleaned Json for communicating with backend
-- *March 20*, Redesign graph details based on latest design discussion with prof.
-- *March 25*,
-	- Graph Snapshot feature with pretty print
-	- Graph write back finalized
-	- Reload from disk on update state call!
-- *March 26*,
-	- Add or decrease load on nodes on some event implemented
-	- Stub module plug and play tested out.
-- *March 27*
-	- Fixed the Caching of json file issue, in absense of dev console
+> ### *draw a graph, change it live, run your model on it*
 
-- [Next Milestones]
-	- epic animantions (very stretch goal)
-	- test on high node densities
-	- node & link color features
+A browser editor for weighted graphs, backed by a small Python server. You add nodes and links with the mouse, change node and link loads from the keyboard, and run a model step (your own Python function) on the graph. Every edit is saved right away and shows up in every open tab.
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.161.1-009688?logo=fastapi&logoColor=white)
+![Uvicorn](https://img.shields.io/badge/Uvicorn-0.54.0-499848)
+![D3.js](https://img.shields.io/badge/D3.js-7.9.0-F9A03C?logo=d3dotjs&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+![The editor with the example graph loaded and node 1 selected](docs/screenshot.png)
+<sub>The editor with the example graph loaded and node 1 selected.</sub>
+
+## Quick start
+
+```bash
+git clone https://github.com/ibipul/InteractiveGraphVizFramework.git
+cd InteractiveGraphVizFramework
+./run.sh
+```
+
+Requires Python 3.10 or newer. The first run creates a virtual environment in `.venv` and installs the packages from `requirements.txt`. The page then opens at **http://localhost:8070**, or the next free port; the terminal prints the address. Keep the terminal open while you use the page, and press Ctrl+C there to stop.
+
+The graph is saved to `data/graph.json` after every edit, so you can stop the server and pick up where you left off.

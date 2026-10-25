@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {
+      "id": 0,
+      "nval": 3,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "id": 1,
+      "nval": 1,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "id": 2,
+      "nval": 3,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "id": 3,
+      "nval": 2,
+      "current": 0,
+      "total": 1
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "target": 1,
+      "lval": 1,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "lval": 1,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "source": 1,
+      "target": 2,
+      "lval": 1,
+      "current": 0,
+      "total": 1
+    },
+    {
+      "source": 2,
+      "target": 3,
+      "lval": 1,
+      "current": 0,
+      "total": 1
+    }
+  ]
+}
