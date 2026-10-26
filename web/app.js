@@ -1,3 +1,7 @@
+// Copyright 2018-2026 Bipul Islam
+// Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+// SPDX-License-Identifier: Apache-2.0
+
 // Graph editor and Ricci-flow front end. Every edit is sent to the backend as
 // one small message; the backend answers with the full new state, which is
 // drawn here on a canvas. The backend is the Python server over a WebSocket,

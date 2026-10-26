@@ -1,3 +1,7 @@
+// Copyright 2018-2026 Bipul Islam
+// Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+// SPDX-License-Identifier: Apache-2.0
+
 // In-browser backend for the web demo: runs the interactive_graph Python
 // package under Pyodide (CPython compiled to WebAssembly) in this worker,
 // and answers the page's messages the way the server does.

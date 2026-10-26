@@ -1,3 +1,7 @@
+# Copyright 2018-2026 Bipul Islam
+# Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+# SPDX-License-Identifier: Apache-2.0
+
 """Web server: serves the page and keeps every open tab in sync.
 
 Each browser opens one WebSocket to /ws. An edit is sent as a small JSON

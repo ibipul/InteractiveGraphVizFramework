@@ -1,3 +1,7 @@
+# Copyright 2018-2026 Bipul Islam
+# Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+# SPDX-License-Identifier: Apache-2.0
+
 """One editing-and-analysis session: the graph, the Ricci flow and its results.
 
 Both the web server (server.py) and the in-browser build (web/py-worker.js,

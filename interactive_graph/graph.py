@@ -1,3 +1,7 @@
+# Copyright 2018-2026 Bipul Islam
+# Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+# SPDX-License-Identifier: Apache-2.0
+
 """The graph state and every edit the browser can make to it.
 
 A graph is a plain dict, the same shape as the JSON files on disk:

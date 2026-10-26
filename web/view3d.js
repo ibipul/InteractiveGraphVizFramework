@@ -1,3 +1,7 @@
+// Copyright 2018-2026 Bipul Islam
+// Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+// SPDX-License-Identifier: Apache-2.0
+
 // 3D view: the same graph drawn in WebGL with 3d-force-graph (three.js),
 // for looking at community structure from any angle. It shares colours,
 // selection and steering with the 2D view; editing gestures (Add mode, box

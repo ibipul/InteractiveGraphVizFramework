@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright 2018-2026 Bipul Islam
+# Licensed under the Apache License, Version 2.0. See LICENSE and NOTICE.
+# SPDX-License-Identifier: Apache-2.0
 # One-command launcher: sets up Python, installs dependencies, starts the graph editor.
 # Usage: ./run.sh                 (opens http://localhost:8070, or the next free port)
 #        PORT=9000 ./run.sh       (use exactly this port)
