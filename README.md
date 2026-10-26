@@ -36,6 +36,23 @@ Requires Python 3.11 or newer. The first run creates a virtual environment in `.
 
 Then, in the page: pick **College football** under **Graph**, press **Load**, then **Run** under **Ricci flow**.
 
+## How to cite
+
+If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
+
+> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
+
+```bibtex
+@software{islam_interactive_ricci_flow_2026,
+  author  = {Islam, Bipul},
+  title   = {Interactive Ricci Flow},
+  version = {0.1.0},
+  year    = {2026},
+  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
+  note    = {ORCID: 0009-0002-5209-7572}
+}
+```
+
 ## Method at a glance
 
 ```mermaid
@@ -58,23 +75,6 @@ The tool treats Ricci flow as a feedback loop. The flow is the system being stee
 - **Flow.** Each iteration computes the curvature κ of every link from the current lengths w, then updates them: w ← N(w − η κ ⊙ w + u). Here η is the step size, ⊙ multiplies link by link, u is the control input and N rescales the free lengths so the total stays fixed. Bridges between groups (κ < 0) stretch; links inside groups (κ > 0) shrink.
 - **Output.** Cutting links longer than a threshold gives the communities, scored by modularity and, when there is ground truth, by NMI and ARI.
 - **Control.** User edits become the input u. Today every edit is a hard pin: the link's length is set and held. That is the limit k → ∞ of the soft-pin law u = −k(w − w_ref).
-
-### How to cite
-
-If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
-
-> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
-
-```bibtex
-@software{islam_interactive_ricci_flow_2026,
-  author  = {Islam, Bipul},
-  title   = {Interactive Ricci Flow},
-  version = {0.1.0},
-  year    = {2026},
-  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
-  note    = {ORCID: 0009-0002-5209-7572}
-}
-```
 
 ### In development
 
