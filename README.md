@@ -17,6 +17,7 @@ The computation is a small Python package. Change the curvature, the flow update
 ![D3.js](https://img.shields.io/badge/D3.js-7.9.0-F9A03C?logo=d3dotjs&logoColor=white)
 ![3d-force-graph](https://img.shields.io/badge/3d--force--graph-1.80.0-000000?logo=threedotjs&logoColor=white)
 ![Pyodide](https://img.shields.io/badge/Pyodide-314.0.7-FFD43B)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23660079.svg)](https://doi.org/10.5281/zenodo.23660079)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ![College football after 12 Ollivier-Ricci flow iterations](docs/screenshot.png)
@@ -40,16 +41,18 @@ Then, in the page: pick **College football** under **Graph**, press **Load**, th
 
 If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
 
-> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
+> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23660079
 
 ```bibtex
 @software{islam_interactive_ricci_flow_2026,
-  author  = {Islam, Bipul},
-  title   = {Interactive Ricci Flow},
-  version = {0.1.0},
-  year    = {2026},
-  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
-  note    = {ORCID: 0009-0002-5209-7572}
+  author    = {Islam, Bipul},
+  title     = {Interactive Ricci Flow},
+  version   = {0.1.0},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23660079},
+  url       = {https://github.com/ibipul/InteractiveGraphVizFramework},
+  note      = {ORCID: 0009-0002-5209-7572}
 }
 ```
 
