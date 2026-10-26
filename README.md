@@ -4,7 +4,9 @@
 
 <sub>Repository: InteractiveGraphVizFramework, which started in 2018 as a general interactive graph editor.</sub>
 
-A browser workbench for graphs: load a network (a classic dataset, a synthetic benchmark or your own file), run Ricci flow on it with Ollivier-Ricci or Forman-Ricci curvature, and watch communities pull apart as the links between them stretch. While the flow runs you can steer it: pin links, push a group away from the rest, pull a group together, change any link. Results are scored against the ground truth when there is one.
+An interactive web tool for Ricci-flow community detection, and a framework for experimenting with the method. In the page you load a network (a classic dataset, a synthetic benchmark or your own file), run Ricci flow on it with Ollivier-Ricci or Forman-Ricci curvature, and watch communities pull apart as the links between them stretch. While the flow runs you can steer it: pin links, push a group away from the rest, pull a group together, change any link. Results are scored against the ground truth when there is one.
+
+The computation is a small Python package. Change the curvature, the flow update or the community cut, run the local server, and the page, the steering and the scores all use your version; see [Changing the method](#changing-the-method).
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-2.4.6-013243?logo=numpy&logoColor=white)
@@ -91,6 +93,7 @@ The tool treats Ricci flow as a feedback loop. The flow is the system being stee
 - [Project structure](#project-structure)
 - [Configuration](#configuration)
 - [Development](#development)
+- [Changing the method](#changing-the-method)
 - [What changed from the 2018 version](#what-changed-from-the-2018-version)
 - [Troubleshooting](#troubleshooting)
 - [References](#references)
@@ -367,6 +370,21 @@ To run the server with auto-reload while editing:
 ```
 
 The web demo loads the files in `interactive_graph/` listed in `web/py-worker.js` (`FILES`); add new modules there. Open `http://localhost:8070/?demo` to try the web demo against your local files.
+
+## Changing the method
+
+All the computation is in `interactive_graph/ricci.py` and `interactive_graph/session.py`; the page only draws and sends edits. To try your own version, edit those files, start the server with auto-reload (above), and press **Run** in the page: every iteration, steering edit and score then goes through your code. Score your change against the ground truth on the built-in datasets and benchmarks, and compare with the Louvain baseline and the table in [What to expect](#what-to-expect).
+
+| To change | Edit |
+|---|---|
+| A curvature, or add a new one | `ollivier_ricci`, `forman_ricci` and the `curvature` dispatcher in `ricci.py`; a new method also needs an entry in `METHODS` and `DEFAULT_STEP`, and a button in `web/index.html` |
+| The flow update the page runs, with pins and edits | `Session.iterate()` in `session.py` (update, rescaling of free links, pinned links) |
+| The same update for scripts and tests | `ricci_flow()` in `ricci.py`; keep it in step with `Session.iterate()` |
+| How communities are cut from the lengths | `find_communities()` and `cut_communities()` in `ricci.py` |
+| Scores | `modularity()`, `nmi()`, `ari()` and `compare_to_truth()` in `ricci.py` |
+| Steering edits | the `_op_*` methods in `graph.py` (`_op_scale`, `_op_pin`, `_op_set`, …); the page sends them over the WebSocket |
+
+Run `.venv/bin/python -m pytest` after a change: the tests check curvature values against GraphRicciCurvature, so a deliberate change to a curvature will fail those tests until you update them. The web demo runs the same files under Pyodide; open `http://localhost:8070/?demo` to check your version there too.
 
 ## What changed from the 2018 version
 

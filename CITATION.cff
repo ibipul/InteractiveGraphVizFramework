@@ -3,9 +3,11 @@ message: "If you use this software, please cite it using the metadata from this 
 type: software
 title: "Interactive Ricci Flow"
 abstract: >-
-  A browser workbench for Ricci-flow community detection on networks, with
-  Ollivier-Ricci and Forman-Ricci curvature, scoring against ground truth,
-  and live human-in-the-loop steering of the flow.
+  An interactive web tool for Ricci-flow community detection on networks, and
+  a framework for experimenting with the method. It runs the flow with
+  Ollivier-Ricci or Forman-Ricci curvature, scores the communities against
+  ground truth, and lets people steer the flow live. The computation is a
+  Python package that can be changed and run from a local server.
 authors:
   - family-names: Islam
     given-names: Bipul
