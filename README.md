@@ -408,13 +408,13 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 
 If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
 
-> Islam, B. (2026). *Interactive Ricci Flow* (Version 1.0.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
+> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
 
 ```bibtex
 @software{islam_interactive_ricci_flow_2026,
   author  = {Islam, Bipul},
   title   = {Interactive Ricci Flow},
-  version = {1.0.0},
+  version = {0.1.0},
   year    = {2026},
   url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
   note    = {ORCID: 0009-0002-5209-7572}
