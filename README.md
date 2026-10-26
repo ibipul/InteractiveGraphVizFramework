@@ -22,6 +22,38 @@ A browser workbench for graphs: load a network (a classic dataset, a synthetic b
 
 **Live demo:** https://ibipul.github.io/InteractiveGraphVizFramework/. It runs the Python code in your browser on small graphs. For the real datasets, larger graphs and live steering shared between several people, use the Quick start below.
 
+## Method at a glance
+
+```mermaid
+flowchart LR
+    subgraph flow["Ricci flow: one iteration"]
+        direction TB
+        W["Link lengths w"] --> K["Curvature κ(w)<br/>Ollivier or Forman"]
+        K --> S["Flow step + control<br/>w ← N(w − η κ ⊙ w + u)"]
+        S -->|next iteration| W
+    end
+    W --> C["Cut long links<br/>→ communities"]
+    C --> V["Display and scores<br/>modularity, NMI, ARI"]
+    V --> H(("User"))
+    H -->|"pin, push apart,<br/>pull together, set length"| L["Control law<br/>edits → u"]
+    L --> S
+```
+
+The tool treats Ricci flow as a feedback loop. The flow is the system being steered, and the person at the screen closes the loop.
+
+- **Flow.** Each iteration computes the curvature κ of every link from the current lengths w, then updates them: w ← N(w − η κ ⊙ w + u). Here η is the step size, ⊙ multiplies link by link, u is the control input and N rescales the free lengths so the total stays fixed. Bridges between groups (κ < 0) stretch; links inside groups (κ > 0) shrink.
+- **Output.** Cutting links longer than a threshold gives the communities, scored by modularity and, when there is ground truth, by NMI and ARI.
+- **Control.** User edits become the input u. Today every edit is a hard pin: the link's length is set and held. That is the limit k → ∞ of the soft-pin law u = −k(w − w_ref).
+
+**Planned (not yet implemented or tested):**
+
+- **Control laws.** Soft pin u = −k(w − w_ref); a curvature target u = −k(κ − κ_ref) for marking bridges or same-group links; a group objective u = −k ∇J over must-link and cannot-link pairs; a control barrier function filter that applies the smallest u keeping w_e ≥ τ; and a fading gain k_t = k₀λᵗ that tests whether the network supports an edit once released. Each is compared by accuracy against total control effort Σ‖u_t‖, scored on links and nodes the user did not touch.
+- **Normalization that does not undo the control.** Subtract the mean curvature instead of rescaling afterwards: w ← w · (1 − η(κ − κ̄)) with κ̄ = Σκw / Σw keeps the total length exactly, and a control input added after it is left alone. The log-space form w ← w · exp(−η(κ − κ̄)) also keeps every length positive at any step.
+- **Stable steps.** Cap the change per step by clipping η(κ − κ̄) to [−c, c], with c chosen by a step-halving test (halve η, double the iterations, check the lengths agree). This targets the oscillation seen with the Ollivier default η = 1.
+- **Edits that stay local.** Rescale free links to their own previous total, so pinning or pushing one group no longer shrinks or grows every other link.
+- **Stable communities.** Keep the previous cut threshold unless a new one raises modularity by a set margin, so near-ties do not flip communities between iterations.
+- **Evaluation.** Several seeds with mean ± sd; Louvain, Leiden, Infomap and spectral baselines; an LFR sweep over the mixing parameter μ; simulated users whose edits are scored on the parts of the graph they did not edit.
+
 ## Quick start
 
 ```bash
