@@ -22,6 +22,18 @@ A browser workbench for graphs: load a network (a classic dataset, a synthetic b
 
 **Live demo:** https://ibipul.github.io/InteractiveGraphVizFramework/. It runs the Python code in your browser on small graphs. For the real datasets, larger graphs and live steering shared between several people, use the Quick start below.
 
+## Quick start
+
+```bash
+git clone https://github.com/ibipul/InteractiveGraphVizFramework.git
+cd InteractiveGraphVizFramework
+./run.sh
+```
+
+Requires Python 3.11 or newer. The first run creates a virtual environment in `.venv` and installs the pinned packages from `requirements.txt`. The page then opens at **http://localhost:8070**, or the next free port; the terminal prints the address. Keep the terminal open while you use the page, and press Ctrl+C there to stop.
+
+Then, in the page: pick **College football** under **Graph**, press **Load**, then **Run** under **Ricci flow**.
+
 ## Method at a glance
 
 ```mermaid
@@ -45,26 +57,21 @@ The tool treats Ricci flow as a feedback loop. The flow is the system being stee
 - **Output.** Cutting links longer than a threshold gives the communities, scored by modularity and, when there is ground truth, by NMI and ARI.
 - **Control.** User edits become the input u. Today every edit is a hard pin: the link's length is set and held. That is the limit k → ∞ of the soft-pin law u = −k(w − w_ref).
 
-**Planned (not yet implemented or tested):**
+**In development:**
 
-- **Control laws.** Soft pin u = −k(w − w_ref); a curvature target u = −k(κ − κ_ref) for marking bridges or same-group links; a group objective u = −k ∇J over must-link and cannot-link pairs; a control barrier function filter that applies the smallest u keeping w_e ≥ τ; and a fading gain k_t = k₀λᵗ that tests whether the network supports an edit once released. Each is compared by accuracy against total control effort Σ‖u_t‖, scored on links and nodes the user did not touch.
-- **Normalization that does not undo the control.** Subtract the mean curvature instead of rescaling afterwards: w ← w · (1 − η(κ − κ̄)) with κ̄ = Σκw / Σw keeps the total length exactly, and a control input added after it is left alone. The log-space form w ← w · exp(−η(κ − κ̄)) also keeps every length positive at any step.
-- **Stable steps.** Cap the change per step by clipping η(κ − κ̄) to [−c, c], with c chosen by a step-halving test (halve η, double the iterations, check the lengths agree). This targets the oscillation seen with the Ollivier default η = 1.
-- **Edits that stay local.** Rescale free links to their own previous total, so pinning or pushing one group no longer shrinks or grows every other link.
-- **Stable communities.** Keep the previous cut threshold unless a new one raises modularity by a set margin, so near-ties do not flip communities between iterations.
-- **Evaluation.** Several seeds with mean ± sd; Louvain, Leiden, Infomap and spectral baselines; an LFR sweep over the mixing parameter μ; simulated users whose edits are scored on the parts of the graph they did not edit.
-
-## Quick start
-
-```bash
-git clone https://github.com/ibipul/InteractiveGraphVizFramework.git
-cd InteractiveGraphVizFramework
-./run.sh
-```
-
-Requires Python 3.11 or newer. The first run creates a virtual environment in `.venv` and installs the pinned packages from `requirements.txt`. The page then opens at **http://localhost:8070**, or the next free port; the terminal prints the address. Keep the terminal open while you use the page, and press Ctrl+C there to stop.
-
-Then, in the page: pick **College football** under **Graph**, press **Load**, then **Run** under **Ricci flow**.
+| Area | Approach | Rule |
+|---|---|---|
+| Control laws | Soft pin | u = −k(w − w_ref); k → ∞ gives today's hard pin |
+| | Curvature target, for marking bridges or same-group links | u = −k(κ − κ_ref) |
+| | Group objective over must-link and cannot-link pairs | u = −k ∇J |
+| | Control barrier function filter: the smallest u that keeps a length above a floor | w_e ≥ τ |
+| | Fading gain: does the network keep the edit once it is released? | k_t = k₀λᵗ |
+| Normalization | Subtract the mean curvature instead of rescaling afterwards; keeps the total length exactly and leaves u alone | w ← w · (1 − η(κ − κ̄)), κ̄ = Σκw / Σw |
+| | Log-space form; also keeps every length positive at any step | w ← w · exp(−η(κ − κ̄)) |
+| Step size | Cap the change per step, with c set by a step-halving test; targets the oscillation seen with the Ollivier default η = 1 | clip η(κ − κ̄) to [−c, c] |
+| Edits | Rescale free links to their own previous total, so an edit no longer shrinks or grows every other link | scale = Σ free before / Σ free proposed |
+| Communities | Keep the previous cut threshold unless a new one raises modularity by a set margin | |
+| Evaluation | Accuracy against total control effort, scored on links and nodes the user did not touch; several seeds (mean ± sd); Louvain, Leiden, Infomap and spectral baselines; LFR sweep over μ; simulated users | NMI, ARI vs Σ‖u_t‖ |
 
 ---
 
