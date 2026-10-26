@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "Interactive Ricci Flow"
+abstract: >-
+  A browser workbench for Ricci-flow community detection on networks, with
+  Ollivier-Ricci and Forman-Ricci curvature, scoring against ground truth,
+  and live human-in-the-loop steering of the flow.
+authors:
+  - family-names: Islam
+    given-names: Bipul
+    orcid: "https://orcid.org/0009-0002-5209-7572"
+repository-code: "https://github.com/ibipul/InteractiveGraphVizFramework"
+url: "https://ibipul.github.io/InteractiveGraphVizFramework/"
+license: Apache-2.0
+version: 1.0.0
+date-released: "2026-10-26"
+keywords:
+  - Ricci flow
+  - Ricci curvature
+  - community detection
+  - network science
+  - interactive visualization
+  - human-in-the-loop

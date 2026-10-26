@@ -15,7 +15,7 @@ A browser workbench for graphs: load a network (a classic dataset, a synthetic b
 ![D3.js](https://img.shields.io/badge/D3.js-7.9.0-F9A03C?logo=d3dotjs&logoColor=white)
 ![3d-force-graph](https://img.shields.io/badge/3d--force--graph-1.80.0-000000?logo=threedotjs&logoColor=white)
 ![Pyodide](https://img.shields.io/badge/Pyodide-314.0.7-FFD43B)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ![College football after 12 Ollivier-Ricci flow iterations](docs/screenshot.png)
 <sub>College football after 12 Ollivier-Ricci flow iterations: 10 communities found (NMI 0.89 against the real conferences). Links inside a community stay solid; links the flow stretched turn dotted; purple links were pinned by hand.</sub>
@@ -94,6 +94,7 @@ The tool treats Ricci flow as a feedback loop. The flow is the system being stee
 - [What changed from the 2018 version](#what-changed-from-the-2018-version)
 - [Troubleshooting](#troubleshooting)
 - [References](#references)
+- [How to cite](#how-to-cite)
 - [License](#license)
 
 ## Features
@@ -403,8 +404,25 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 - A. Samal, R. P. Sreejith, J. Gu, S. Liu, E. Saucan, J. Jost, "Comparative analysis of two discretizations of Ricci curvature for complex networks", *Scientific Reports* 8, 8650 (2018).
 - A. Lancichinetti, S. Fortunato, F. Radicchi, "Benchmark graphs for testing community detection algorithms", *Physical Review E* 78, 046110 (2008).
 
+## How to cite
+
+If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
+
+> Islam, B. (2026). *Interactive Ricci Flow* (Version 1.0.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
+
+```bibtex
+@software{islam_interactive_ricci_flow_2026,
+  author  = {Islam, Bipul},
+  title   = {Interactive Ricci Flow},
+  version = {1.0.0},
+  year    = {2026},
+  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
+  note    = {ORCID: 0009-0002-5209-7572}
+}
+```
+
 ## License
 
-MIT License; see [LICENSE](LICENSE).
+Copyright 2018–2026 Bipul Islam. Licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE). Anyone who redistributes the code, or a modified version of it, must include the [NOTICE](NOTICE) file.
 
 The original 2018 editor started from Ross Kirsling's D3 directed-graph editor example (MIT-licensed); none of that code remains after the rewrite.
