@@ -36,6 +36,23 @@ Requires Python 3.11 or newer. The first run creates a virtual environment in `.
 
 Then, in the page: pick **College football** under **Graph**, press **Load**, then **Run** under **Ricci flow**.
 
+## How to cite
+
+If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
+
+> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
+
+```bibtex
+@software{islam_interactive_ricci_flow_2026,
+  author  = {Islam, Bipul},
+  title   = {Interactive Ricci Flow},
+  version = {0.1.0},
+  year    = {2026},
+  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
+  note    = {ORCID: 0009-0002-5209-7572}
+}
+```
+
 ## Method at a glance
 
 ```mermaid
@@ -97,7 +114,6 @@ The tool treats Ricci flow as a feedback loop. The flow is the system being stee
 - [What changed from the 2018 version](#what-changed-from-the-2018-version)
 - [Troubleshooting](#troubleshooting)
 - [References](#references)
-- [How to cite](#how-to-cite)
 - [License](#license)
 
 ## Features
@@ -421,23 +437,6 @@ The first version (Python 2.7, Flask-SocketIO, D3 v3) was a graph editor that wo
 - R. P. Sreejith, K. Mohanraj, J. Jost, E. Saucan, A. Samal, "Forman curvature for complex networks", *Journal of Statistical Mechanics* (2016).
 - A. Samal, R. P. Sreejith, J. Gu, S. Liu, E. Saucan, J. Jost, "Comparative analysis of two discretizations of Ricci curvature for complex networks", *Scientific Reports* 8, 8650 (2018).
 - A. Lancichinetti, S. Fortunato, F. Radicchi, "Benchmark graphs for testing community detection algorithms", *Physical Review E* 78, 046110 (2008).
-
-## How to cite
-
-If you use this software, or results obtained with it, please cite it. GitHub's **Cite this repository** button (in the right sidebar) gives the same details from [CITATION.cff](CITATION.cff).
-
-> Islam, B. (2026). *Interactive Ricci Flow* (Version 0.1.0) [Computer software]. https://github.com/ibipul/InteractiveGraphVizFramework
-
-```bibtex
-@software{islam_interactive_ricci_flow_2026,
-  author  = {Islam, Bipul},
-  title   = {Interactive Ricci Flow},
-  version = {0.1.0},
-  year    = {2026},
-  url     = {https://github.com/ibipul/InteractiveGraphVizFramework},
-  note    = {ORCID: 0009-0002-5209-7572}
-}
-```
 
 ## License
 
